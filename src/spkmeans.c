@@ -10,7 +10,19 @@ int main(int argc, char *argv[]) {
 
 /* Main Utility Functions */
 
-int wam_func(double*** vectors_list, int N, int dim, double*** wamMat){
+/* 
+ * Function: wam_func
+ * ------------------
+ * calculates the wam
+ * 
+ * vectors_list: the list of all N vectors
+ * N: the number of vectors
+ * dim: the dimension of the vectors
+ * wamMat: a pointer to the output matrix
+ * 
+ * returns: NULL
+ */
+void wam_func(double*** vectors_list, int N, int dim, double*** wamMat){
     int i;
     int j;
     
@@ -31,7 +43,18 @@ int wam_func(double*** vectors_list, int N, int dim, double*** wamMat){
     }
 }
 
-int ddg_func(int N, double*** wamMat, double*** ddgMat){
+/* 
+ * Function: ddg_func
+ * ------------------
+ * calculates the dgg matrix
+ * 
+ * N: the number of vectors
+ * wamMat: a pointer to the WAM
+ * ddgMat: a pointer to the ddg output matrix
+ * 
+ * returns: NULL
+ */
+void ddg_func(int N, double*** wamMat, double*** ddgMat){
     int i;
     int j;
     double sum;
@@ -46,19 +69,31 @@ int ddg_func(int N, double*** wamMat, double*** ddgMat){
     }
 }
 
-int lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** lNormMat){
+/* 
+ * Function: lNorm_func
+ * ------------------
+ * calculates the lNorm matrix
+ * 
+ * N: the number of vectors
+ * wamMat: a pointer to the WAM
+ * ddgMat: a pointer to the ddg matrix
+ * lNormMat: a pointer to the output lNorm matrix
+ * 
+ * returns: NULL
+ */
+void lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** lNormMat){
     int i;
     int j;
     
     double*** minusSqrtMat = initMat(N);
-    matDup(ddgMat, minusSqrtMat);
+    matDup(N, ddgMat, minusSqrtMat);
 
     minusSqrtD(N, minusSqrtMat);
     
     double*** resMat1 = initMat(N);
-    matMult(N, minusSqrtMat, wamMat, resMat1);
+    diagMatMult(N, minusSqrtMat, wamMat, resMat1);
 
-    matMult(N, resMat1, minusSqrtMat, lNormMat);
+    diagMatMult(N, resMat1, minusSqrtMat, lNormMat);
     
     freeMat(N, resMat1);
     freeMat(N, minusSqrtMat);
@@ -155,6 +190,17 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenV
 
 /* Granular Utility Functions */
 
+/* 
+ * Function: vectorDist
+ * ------------------
+ * calculates the euclid norm of the subtraction of 2 vectors
+ * 
+ * v1: the first vector
+ * v2: the second vector
+ * dim: the dimension of the vectors
+ * 
+ * returns: the norm
+ */
 double vectorDist(double* v1, double* v2, int dim){
     double dist = 0;
     int i = 0;
@@ -166,15 +212,41 @@ double vectorDist(double* v1, double* v2, int dim){
     return pow(dist, 0.5);
 }
 
-void minusSqrtD(int N, double*** D){ // Guy - changed return type to void??? Liad - I think we shuld remain the return type as int for scalability
+/* 
+ * Function: minusSqrtD
+ * ------------------
+ * processes some D matrix to its minus sqrt form
+ * 
+ * N: the dimention of the given matrices (NxN)
+ * D: a pointer to the matrix
+ * 
+ * returns: NULL
+ */
+void minusSqrtD(int N, double*** D){ // Guy - changed return type to void??? Liad - I think we shuld remain the return type as int for scalability???
     int i;
     for (i = 0; i < N; i++){
         (*D)[i][i] = 1 / (sqrt((*D)[i][i]));
-    }
+    } //Guy - there is no need to return 0 or 1. In reallity it wont return 1 in case of an error. we would like to wish we could do that but we cant so we should remove???
 }
 
-int diagMatMult(int N, int diagPosition, double*** mat1, double*** mat2, double*** outputMat){
-    
+/* 
+ * Function: diagMatMult
+ * ------------------
+ * multiplies to matrices where one is diagonal
+ * 
+ * N: the dimention of the given matrices (NxN)
+ * mat1: a pointer to the left matrix
+ * mat2: a pointer to the right matrix
+ * outputMat: a pointer to the output matrix
+ * 
+ * returns: NULL
+ */
+void diagMatMult(int N, double*** mat1, double*** mat2, double*** outputMat){
+    int i;
+
+    for (i = 0; i < N; i++){
+        (*outputMat)[i][i] = (*mat1)[i][i] * (*mat2)[i][i];
+    }
 }
 
 /* 
@@ -288,33 +360,6 @@ int find_ij_pivot(int N, double*** A, int* i_p, int* j_p){
  * returns: 0 if there is no exception and 1 elsewhere
  */
 int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
-<<<<<<< HEAD
-    int i;
-    int j;
-    int m;
-    int sum = 0;
-
-    for (i = 0; i < N; i++){
-        for (j = 0; j < N; j++){
-            for (m = 0; m < N; m++){
-                sum += (*mat1)[i][j + m] * (*mat2)[i + m][j];
-            }
-            (*outputMat)[i][j] = sum;
-            sum = 0;
-        }
-    }
-}
-
-int matDup(double*** origMat, double*** newMat){
-    int i;
-    int j;
-
-    for (i = 0; i < N; i++){
-        for (j = 0; j < N; j++){
-            (*newMat)[i][j] = (*origMat)[i][j];
-        }
-    }
-=======
     int i,j,k;
     double*** mat2_T = NULL;
     double m_ij;
@@ -341,7 +386,7 @@ int matDup(double*** origMat, double*** newMat){
     if(freeMat(N,mat2_T)){
         return 1;
     }
-    return 0;
+    return 0; // Guy - I think there is no need for transpose and it complicates the function
 }
 
 /* 
@@ -364,7 +409,6 @@ int matDup(int N, double*** origMat, double*** newMat){
         }
     }
     return 0;
->>>>>>> 42849178e70cc2287390a40ce8afd0f2834a4bb2
 }
 
 /* 
@@ -491,6 +535,15 @@ double offCalc(int N, double*** mat){
     return off;
 }
 
+/* 
+ * Function: initMat
+ * ---------------------
+ * initizlises a zero - matrix in dimension N
+ *  
+ * N: the dimention of the given matrix (NxN)
+ * 
+ * returns: a pointer to the new matrix
+ */
 double*** initMat(int N){
     int i;
     int j;
@@ -509,7 +562,17 @@ double*** initMat(int N){
     return &newMat;
 }
 
-int freeMat(int N, double*** mat){
+/* 
+ * Function: freeMat
+ * ---------------------
+ * frees memory of a given matrix
+ *  
+ * N: the dimention of the given matrix (NxN)
+ * mat: the matrix to be freed
+ * 
+ * returns: NULL
+ */
+void freeMat(int N, double*** mat){
     int i;
 
     for (i = 0; i < N; i++){
