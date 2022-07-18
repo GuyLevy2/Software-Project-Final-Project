@@ -85,14 +85,70 @@ int lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** lNormMat){
  * symMat: a pointer to the given real, symmetric and full rank matrix that
  *      arranged as two dimensional array
  * eigenVectors: a pointer to the output eigenvectors that arranged as two
- *      dimensional array
+ *      dimensional array (initiailzed with zeroes)
  * eigenValues: a pointer to the output eigenvalues that arranged as one 
- *      dimensional array
+ *      dimensional array (initialized with zeroes)
  * 
  * returns: 0 if there is no exception and 1 elsewhere
  */
 int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenValues){
+    int MAX_ROTATIONS = 100;
+    int i = 0, j = 0, countRot = 0, k;
+    double c = 0, s = 0;
+    double*** P = NULL;
+    double*** A = NULL, A_tag = NULL;
+    double EPSILON = 0.00001;
 
+    unityMat(N, eigenVectors);
+    
+    A = initMat(N);
+    if (A == NULL){
+        return 1;
+    }
+    
+    A_tag = initMat(N);
+    if (A_tag == NULL){
+        return 1;
+    }
+
+    matDup(N, symMat, A_tag);
+
+    P = initMat(N);
+    if (P == NULL){
+        return 1;
+    }
+
+    do{
+        matDup(N, A_tag, A);
+        
+        unityMat(N, P);
+        if(find_ij_pivot(N, A, &i, &j)){
+            return 1;
+        }
+        buildRotMat(N, A, i, j, &c, &s, P);
+        matMultInplace(N, P, eigenVectors);  /* NOT GOOD */
+        computeA_tag(N, i, j, A, c, A, A_tag);
+
+        countRot++;
+    } while ((!convergenceTest(N, EPSILON, A, A_tag)) && (countRot < MAX_ROTATIONS));
+
+    for(k = 0; k < N; k++){
+        (*eigenValues)[k] = (*A_tag)[k][k];
+    }
+    
+    if (freeMat(N, P)){
+        return 1;
+    }
+
+    if (freeMat(N, A)){
+        return 1;
+    }
+
+    if (freeMat(N, A_tag)){
+        return 1;
+    }
+
+    return 0;
 }
 
 
@@ -121,9 +177,138 @@ int diagMatMult(int N, int diagPosition, double*** mat1, double*** mat2, double*
     
 }
 
+int unityMat(int N, double*** mat){
+    int i, j;
+
+    for(i = 0; i < N; i++){
+        for(j = 0; j < N; j++){
+            (*mat)[i][j] = i == j ? 1 : 0;
+        }
+    }
+
+    return 0;
+}
+
+/* 
+ * Function: buildRotMat
+ * ---------------------
+ * builds the rotation matrix P using a given symmetric matrix A &
+ *      computes s and c values
+ * 
+ * N: the dimention of both given matrices A,P (NxN)
+ * A: a pointer to the given symmetric matrix
+ * i,j: the indexes of the pivot element A_ij of the matrix A
+ * c_p, s_p: pointers to the output values of c and s
+ * P: a pointer to the output rotation matrix (initializes as unity matrix)
+ * 
+ * returns: 0 if there is no exception and 1 elsewhere
+ */
+int buildRotMat(int N, double*** A, int i, int j, int* c_p, int* s_p, double*** P){
+    int sign_theta;
+    double theta, abs_theta, t, c, s;
+
+    theta = (((*A)[j][j]) - ((*A)[i][i]))) / (2*((*A)[i][j]));
+    abs_theta = fabs(theta);
+    sign_theta = theta >= 0 ? 1 : -1;
+
+    t = (sign_theta*1.0) / (abs_theta + pow(pow(theta, 2.0) + 1, 0.5));
+
+    c = 1.0 / pow(pow(t, 2.0) + 1, 0.5);
+    s = t*c;
+
+    *c_p = c;
+    *s_p = s;
+    (*P)[i][i] = c;
+    (*P)[i][j] = s;
+    (*P)[j][j] = c;
+    (*P)[j][i] = -1.0*s;
+    /* TODO: which is i and j in the matrix P??? */
+
+    return 0;
+}
+
+/* 
+ * Function: find_ij_pivot
+ * -----------------------
+ * computes the indexes i,j of the pivot element A_ij
+ * 
+ * The pivot A_ij is the off-digonal element with the largest absolute value of A
+ * 
+ * N: the dimention of the given matrix A (NxN)
+ * A: a pointer to the given real symmetric matrix
+ * i_p: a pointer to the output index i of the pivot A_ij
+ * j_p: a pointer to the output index j of the pivot A_ij
+ *  
+ * returns: 0 if there is no exception and 1 elsewhere
+ */
+int find_ij_pivot(int N, double*** A, int* i_p, int* j_p){
+    int max_i = 0, max_j = 0, i, j;
+    double max_offDiag = 0;
+    
+    for(i = 1; i < N; i++){
+        for(j = i + 1; j < N; j++){
+            if(fabs((*A)[i][j]) >= max_offDiag){
+                max_i = i;
+                max_j = j;
+            }
+        }
+    }
+
+    if(max_i == 0 || max_j == 0){
+        return 1;
+    }
+
+    *i_p = max_i;
+    *j_p = max_j;
+
+    return 0;
+}
+
+/* 
+ * Function: matMultInplace
+ * -----------------
+ * computes the multiplication of two given nxn matrices mat1*mat2 and 
+ *      set the result on the second matrix
+ * 
+ * N: the dimention of both given matrices (NxN)
+ * mat1: a pointer to the first given matrix 
+ * mat2: a pointer to the second given matrix and the output matrix
+ * 
+ * returns: 0 if there is no exception and 1 elsewhere
+ */
+int matMultInplace(int N, double*** mat1, double*** mat2){
+    int i,j,k;
+    double*** mat2_T = NULL;
+    double m_ij;
+
+    mat2_T = initMat(N);
+    if (mat2_T == NULL){
+        return 1;
+    }
+
+    matTranspose(N, mat2, mat2_T);
+
+    for(i = 0; i < N; i++){
+        for(j = 0; j < N; j++){
+            m_ij = 0;
+            for(k = 0; k < N; k++){
+                m_ij += ((*mat1)[i][k]) * ((*mat2_T)[j][k]);
+                /* multipling using mat2 transposed, mat2_T for decreasing
+                 the cash misses */  
+            }
+            (*mat2)[i][j] = m_ij;
+        }
+    }
+
+    if(freeMat(N, mat2_T)){
+        return 1;
+    }
+    return 0;
+}
+
 /* 
  * Function: matMult
- * ---------------------
+ * -----------------
  * computes the multiplication of two given nxn matrices
  * 
  * N: the dimention of both given matrices (NxN)
@@ -171,11 +356,15 @@ int matDup(double*** origMat, double*** newMat){
         return 1;
     }
 
+    matTranspose(N, mat2, mat2_T);
+
     for(i = 0; i < N; i++){
         for(j = 0; j < N; j++){
             m_ij = 0;
             for(k = 0; k < N; k++){
-                m_ij += ((*mat1)[i][k]) * ((*mat2_T)[j][k]);    
+                m_ij += ((*mat1)[i][k]) * ((*mat2_T)[j][k]);
+                /* multipling using mat2 transposed, mat2_T for decreasing
+                 the cash misses */  
             }
             (*outputMat)[i][j] = m_ij;
         }
@@ -189,12 +378,12 @@ int matDup(double*** origMat, double*** newMat){
 
 /* 
  * Function: matDup
- * ---------------------
+ * ----------------
  * creates a duplication of a given matrix
  * 
  * N: the dimention of the given matrix (NxN)
  * origMat: a pointer to the given matrix
- * newMat: a pointer to the output dulicated matrix (initialized with zeroes)
+ * newMat: a pointer to the output dulicated matrix
  * 
  * returns: 0 if there is no exception and 1 elsewhere
  */
@@ -212,12 +401,12 @@ int matDup(int N, double*** origMat, double*** newMat){
 
 /* 
  * Function: matTranspose
- * ---------------------
+ * ----------------------
  * computes a transpose matrix of a given nxn matrix
  * 
  * N: the dimention of the given matrix (NxN)
  * mat: a pointer to the given matrix
- * matT: a pointer to the output transpose matrix (initialized with zeroes)
+ * matT: a pointer to the output transpose matrix
  * 
  * returns: 0 if there is no exception and 1 elsewhere
  */
@@ -233,9 +422,11 @@ int matTranspose(int N, double*** mat, double*** matT){
     return 0;
 }
 
+
+
 /* 
  * Function: computeA_tag
- * ---------------------
+ * ----------------------
  * computes the A' matrix defind as P^T*A*P where A is a real symmetric
  *      matrix and P is a rotation matrix with c and s as rotation elemens:
  *          (1
@@ -253,7 +444,7 @@ int matTranspose(int N, double*** mat, double*** matT){
  *      largenst absolute value
  * A: a poiner to the given real and symmenric matrix
  * c,s: the rotation elements of the rotation matrix P
- * A_tag: a pointer to the output A' matrix (initialized with zeroes)
+ * A_tag: a pointer to the output A' matrix
  * 
  * returns: 0 if there is no exception and 1 elsewhere
  */
@@ -294,7 +485,7 @@ int computeA_tag(int N, int i, int j, double*** A, double c, double s, double***
 
 /* 
  * Function: convergenceTest
- * ---------------------
+ * -------------------------
  * determine if there is a convergence during the iterations of jacobi 
  *      algorithm
  * 
@@ -305,7 +496,7 @@ int computeA_tag(int N, int i, int j, double*** A, double c, double s, double***
  * 
  * returns: off(mat1)^2 - off(mat2)^2 <= epsilon
  */
-bool convergenceTest(int N, double epsilon, double*** mat1, double*** mat2){
+int convergenceTest(int N, double epsilon, double*** mat1, double*** mat2){
     return (offCalc(N,mat1) - offCalc(N,mat2)) <= epsilon;
 }
 
