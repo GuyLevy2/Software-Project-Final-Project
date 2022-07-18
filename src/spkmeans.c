@@ -412,7 +412,7 @@ int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
         }
     }
 
-    if(freeMat(N,mat2_T)){
+    if(freeMat(N, mat2_T)){
         return 1;
     }
     return 0; // Guy - I think there is no need for transpose and it complicates the function
@@ -599,9 +599,11 @@ double*** initMat(int N){
  * N: the dimention of the given matrix (NxN)
  * mat: the matrix to be freed
  * 
- * returns: NULL
+ * returns: NULL 
+ * 
+ * Guy - there is no point in returning anything - we cannot check for errors in the functions as well
  */
-void freeMat(int N, double*** mat){
+int freeMat(int N, double*** mat){
     int i;
 
     for (i = 0; i < N; i++){
