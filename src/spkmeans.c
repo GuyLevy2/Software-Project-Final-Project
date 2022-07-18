@@ -95,11 +95,10 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenV
     int MAX_ROTATIONS = 100;
     int i = 0, j = 0, countRot = 0, k;
     double c = 0, s = 0;
-    double*** P = NULL;
-    double*** A = NULL, A_tag = NULL;
+    double*** P = NULL, ***A = NULL, ***A_tag = NULL, ***tempMat = NULL;
     double EPSILON = 0.00001;
 
-    unityMat(N, eigenVectors);
+    unityMat(N, eigenVectors);  /* eigenVectors = I(N) */
     
     A = initMat(N);
     if (A == NULL){
@@ -110,8 +109,13 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenV
     if (A_tag == NULL){
         return 1;
     }
+    
+    tempMat = initMat(N);
+    if (tempMat == NULL){
+        return 1;
+    }
 
-    matDup(N, symMat, A_tag);
+    matDup(N, symMat, A_tag);   /* A' = symMat (by values) */
 
     P = initMat(N);
     if (P == NULL){
@@ -119,25 +123,28 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenV
     }
 
     do{
-        matDup(N, A_tag, A);
-        
-        unityMat(N, P);
-        if(find_ij_pivot(N, A, &i, &j)){
+        matDup(N, A_tag, A);    /* A = A' (by values)    */
+         
+        if (find_ij_pivot(N, A, &i, &j)){       
             return 1;
         }
-        buildRotMat(N, A, i, j, &c, &s, P);
-        matMultInplace(N, P, eigenVectors);  /* NOT GOOD */
-        computeA_tag(N, i, j, A, c, A, A_tag);
+
+        unityMat(N, P);                         /* P = I(N)                      */
+        buildRotMat(N, A, i, j, &c, &s, P);     /* P is rotate matrix wrt A and c and s are updeted     */ /* Liad - maybe to split into 2 diff functions: computes_c&s + bulidP? */
+        matMult(N, eigenVectors, P, tempMat);   /* tempMat = eigenVectors * P    */
+        matDup(N, tempMat, eigenVectors);       /* eigenVectors = tempMat        */
+        computeA_tag(N, i, j, A, c, A, A_tag);  /* A' = P^T*A*P                  */
 
         countRot++;
     } while ((!convergenceTest(N, EPSILON, A, A_tag)) && (countRot < MAX_ROTATIONS));
 
+    /* Extract the eigenValues from the diagonal of A' */
     for(k = 0; k < N; k++){
         (*eigenValues)[k] = (*A_tag)[k][k];
     }
     
-    /* Free allocted matrixes in this function*/
-    if (freeMat(N, P) || freeMat(N, A) || freeMat(N, A_tag)){
+    /* Free all matrixes which allocated during this function */
+    if (freeMat(N, P) || freeMat(N, A) || freeMat(N, A_tag) || freeMat(N, tempMat)){
         return 1;
     }
     
@@ -268,48 +275,6 @@ int find_ij_pivot(int N, double*** A, int* i_p, int* j_p){
 }
 
 /* 
- * Function: matMultInplace
- * -----------------
- * computes the multiplication of two given nxn matrices mat1*mat2 and 
- *      set the result on the second matrix
- * 
- * N: the dimention of both given matrices (NxN)
- * mat1: a pointer to the first given matrix 
- * mat2: a pointer to the second given matrix and the output matrix
- * 
- * returns: 0 if there is no exception and 1 elsewhere
- */
-int matMultInplace(int N, double*** mat1, double*** mat2){
-    int i,j,k;
-    double*** mat2_T = NULL;
-    double m_ij;
-
-    mat2_T = initMat(N);
-    if (mat2_T == NULL){
-        return 1;
-    }
-
-    matTranspose(N, mat2, mat2_T);
-
-    for(i = 0; i < N; i++){
-        for(j = 0; j < N; j++){
-            m_ij = 0;
-            for(k = 0; k < N; k++){
-                m_ij += ((*mat1)[i][k]) * ((*mat2_T)[j][k]);
-                /* multipling using mat2 transposed, mat2_T for decreasing
-                 the cash misses */  
-            }
-            (*mat2)[i][j] = m_ij;
-        }
-    }
-
-    if(freeMat(N, mat2_T)){
-        return 1;
-    }
-    return 0;
-}
-
-/* 
  * Function: matMult
  * -----------------
  * computes the multiplication of two given nxn matrices
@@ -424,8 +389,6 @@ int matTranspose(int N, double*** mat, double*** matT){
 
     return 0;
 }
-
-
 
 /* 
  * Function: computeA_tag
