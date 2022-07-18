@@ -135,6 +135,7 @@ int diagMatMult(int N, int diagPosition, double*** mat1, double*** mat2, double*
  * returns: 0 if there is no exception and 1 elsewhere
  */
 int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
+<<<<<<< HEAD
     int i;
     int j;
     int m;
@@ -152,7 +153,6 @@ int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
 }
 
 int matDup(double*** origMat, double*** newMat){
-    /* Guy
     int i;
     int j;
 
@@ -161,8 +161,7 @@ int matDup(double*** origMat, double*** newMat){
             (*newMat)[i][j] = (*origMat)[i][j];
         }
     }
-    */
-
+=======
     int i,j,k;
     double*** mat2_T = NULL;
     double m_ij;
@@ -208,6 +207,7 @@ int matDup(int N, double*** origMat, double*** newMat){
         }
     }
     return 0;
+>>>>>>> 42849178e70cc2287390a40ce8afd0f2834a4bb2
 }
 
 /* 
