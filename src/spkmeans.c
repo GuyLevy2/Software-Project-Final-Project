@@ -136,18 +136,11 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenV
         (*eigenValues)[k] = (*A_tag)[k][k];
     }
     
-    if (freeMat(N, P)){
+    /* Free allocted matrixes in this function*/
+    if (freeMat(N, P) || freeMat(N, A) || freeMat(N, A_tag)){
         return 1;
     }
-
-    if (freeMat(N, A)){
-        return 1;
-    }
-
-    if (freeMat(N, A_tag)){
-        return 1;
-    }
-
+    
     return 0;
 }
 
@@ -166,7 +159,7 @@ double vectorDist(double* v1, double* v2, int dim){
     return pow(dist, 0.5);
 }
 
-void minusSqrtD(int N, double*** D){ // Guy - changed return type to void???
+void minusSqrtD(int N, double*** D){ // Guy - changed return type to void??? Liad - I think we shuld remain the return type as int for scalability
     int i;
     for (i = 0; i < N; i++){
         (*D)[i][i] = 1 / (sqrt((*D)[i][i]));
@@ -177,6 +170,16 @@ int diagMatMult(int N, int diagPosition, double*** mat1, double*** mat2, double*
     
 }
 
+/* 
+ * Function: unityMat
+ * ------------------
+ * sets a given matrix to be unity matrix
+ * 
+ * N: the dimention of the given matrix mat (NxN)
+ * mat: a pointer to the output unity matrix
+ * 
+ * returns: 0 if there is no exception and 1 elsewhere
+ */
 int unityMat(int N, double*** mat){
     int i, j;
 
@@ -528,7 +531,7 @@ double offCalc(int N, double*** mat){
 double*** initMat(int N){
     int i;
     int j;
-    double** newMat = malloc(N * sizeof(double*)); // Guy - should we check if succeeded???
+    double** newMat = malloc(N * sizeof(double*)); // Guy - should we check if succeeded??? Liad - Yes, and if didn't we should return NULL.
     
     for (i = 0; i < N; i++){
         double* vec = malloc(N * sizeof(double));
@@ -551,12 +554,4 @@ int freeMat(int N, double*** mat){
     }
     
     free(*mat);
-}
-
-int convergenceTest(double epsilon, double*** mat1, double*** mat2){
-
-}
-
-int offCalc(int N, double*** mat){
-
 }
