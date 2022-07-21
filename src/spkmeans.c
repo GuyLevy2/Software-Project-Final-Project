@@ -4,27 +4,17 @@
 #include <math.h>
 
 int main(int argc, char *argv[]) {
-    int k = 0;
-    int dimension;
-    int line_count;
-    int maxIter;
-    char* inputFile;
-    char* outputFile;
-    double** vectorsList;
+    int k = 0, dimension, line_count;
+    int maxIter, iteration_number;
+    char* inputFile, *outputFile;
+    double** vectorsList, **cluster, **centroidsList;;
     double EPSILON = 0.001;
-    int inputError;
+    int inputError, writeSuccess, freeSuccess;
     double*** clusterList;
     int* index_to_insert;
-    double** cluster;
-    double** centroidsList;
-    int i;
-    double* vec;
-    double* centroid_i;
-    int j;
+    int i, j;
+    double* vec, *centroid_i;
     double deltaMiu;
-    int iteration_number;
-    int writeSuccess;
-    int freeSuccess;
 
     inputError = validateAndProcessInput(argc, argv, &k, &dimension, &line_count, &maxIter, &inputFile, &outputFile, &vectorsList);
     
@@ -100,7 +90,7 @@ void ddg_func(int N, double*** wamMat, double*** ddgMat){
 
 /* 
  * Function: lNorm_func
- * ------------------
+ * --------------------
  * calculates the lNorm matrix
  * 
  * N: the number of vectors
@@ -153,7 +143,7 @@ void lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** lNormMat){
  * eigenValues: a pointer to the output eigenvalues that arranged as one 
  *      dimensional array (initialized with zeroes)
  * 
- * returns: 0 if there is no exception and 1 elsewhere
+ * returns: 0 if there is no exception and 1 otherwise
  */
 int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenValues){
     int MAX_ROTATIONS = 100;
@@ -200,7 +190,8 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenV
         computeA_tag(N, i, j, A, c, A, A_tag);  /* A' = P^T*A*P                  */
 
         countRot++;
-    } while ((!convergenceTest(N, EPSILON, A, A_tag)) && (countRot < MAX_ROTATIONS));
+    } while ((!convergenceTest(N, EPSILON, A, A_tag)) 
+                && (countRot < MAX_ROTATIONS));
 
     /* Extract the eigenValues from the diagonal of A' */
     for(k = 0; k < N; k++){
@@ -208,7 +199,8 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenV
     }
     
     /* Free all matrixes which allocated during this function */
-    if (freeMat(N, P) || freeMat(N, A) || freeMat(N, A_tag) || freeMat(N, tempMat)){
+    if (freeMat(N, P) || freeMat(N, A) 
+        || freeMat(N, A_tag) || freeMat(N, tempMat)){
         return 1;
     }
     
@@ -221,7 +213,7 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenV
 
 /* 
  * Function: vectorDist
- * ------------------
+ * --------------------
  * calculates the euclid norm of the subtraction of 2 vectors
  * 
  * v1: the first vector
@@ -243,7 +235,7 @@ double vectorDist(double* v1, double* v2, int dim){
 
 /* 
  * Function: minusSqrtD
- * ------------------
+ * --------------------
  * processes some D matrix to its minus sqrt form
  * 
  * N: the dimention of the given matrices (NxN)
@@ -260,7 +252,7 @@ void minusSqrtD(int N, double*** D){ // Guy - changed return type to void??? Lia
 
 /* 
  * Function: diagMatMult
- * ------------------
+ * ---------------------
  * multiplies to matrices where one is diagonal
  * 
  * N: the dimention of the given matrices (NxN)
@@ -281,12 +273,12 @@ void diagMatMult(int N, double*** mat1, double*** mat2, double*** outputMat){
 /* 
  * Function: unityMat
  * ------------------
- * sets a given matrix to be unity matrix
+ * sets a given matrix to be a unit matrix
  * 
  * N: the dimention of the given matrix mat (NxN)
- * mat: a pointer to the output unity matrix
+ * mat: a pointer to the output unit matrix
  * 
- * returns: 0 if there is no exception and 1 elsewhere
+ * returns: 0 if there is no exception and 1 otherwise
  */
 int unityMat(int N, double*** mat){
     int i, j;
@@ -312,7 +304,7 @@ int unityMat(int N, double*** mat){
  * c_p, s_p: pointers to the output values of c and s
  * P: a pointer to the output rotation matrix (initializes as unity matrix)
  * 
- * returns: 0 if there is no exception and 1 elsewhere
+ * returns: 0 if there is no exception and 1 otherwise
  */
 int buildRotMat(int N, double*** A, int i, int j, int* c_p, int* s_p, double*** P){
     int sign_theta;
@@ -350,7 +342,7 @@ int buildRotMat(int N, double*** A, int i, int j, int* c_p, int* s_p, double*** 
  * i_p: a pointer to the output index i of the pivot A_ij
  * j_p: a pointer to the output index j of the pivot A_ij
  *  
- * returns: 0 if there is no exception and 1 elsewhere
+ * returns: 0 if there is no exception and 1 otherwise
  */
 int find_ij_pivot(int N, double*** A, int* i_p, int* j_p){
     int max_i = 0, max_j = 0, i, j;
@@ -386,7 +378,7 @@ int find_ij_pivot(int N, double*** A, int* i_p, int* j_p){
  *      dimensional array
  * outputMat: a pointer to the output multipling matrix mat1*mat2 
  * 
- * returns: 0 if there is no exception and 1 elsewhere
+ * returns: 0 if there is no exception and 1 otherwise
  */
 int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
     int i,j,k;
@@ -427,7 +419,7 @@ int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
  * origMat: a pointer to the given matrix
  * newMat: a pointer to the output dulicated matrix
  * 
- * returns: 0 if there is no exception and 1 elsewhere
+ * returns: 0 if there is no exception and 1 otherwise
  */
 int matDup(int N, double*** origMat, double*** newMat){
     int i,j;
@@ -449,7 +441,7 @@ int matDup(int N, double*** origMat, double*** newMat){
  * mat: a pointer to the given matrix
  * matT: a pointer to the output transpose matrix
  * 
- * returns: 0 if there is no exception and 1 elsewhere
+ * returns: 0 if there is no exception and 1 otherwise
  */
 int matTranspose(int N, double*** mat, double*** matT){
     int i,j;
@@ -485,7 +477,7 @@ int matTranspose(int N, double*** mat, double*** matT){
  * c,s: the rotation elements of the rotation matrix P
  * A_tag: a pointer to the output A' matrix
  * 
- * returns: 0 if there is no exception and 1 elsewhere
+ * returns: 0 if there is no exception and 1 otherwise
  */
 int computeA_tag(int N, int i, int j, double*** A, double c, double s, double*** A_tag){
     int r;
@@ -541,7 +533,7 @@ int convergenceTest(int N, double epsilon, double*** mat1, double*** mat2){
 
 /* 
  * Function: offCalc
- * ---------------------
+ * -----------------
  * computes the sum squares of all off-diagonal elements of a given matrix
  *  
  * N: the dimention of the given matrix (NxN)
@@ -618,7 +610,7 @@ int freeMat(int N, double*** mat){
 
 /* 
  * Function: validateAndProcessInput
- * ---------------------
+ * ---------------------------------
  * processes the CMD input and file
  *  
  * argc: argc
@@ -790,7 +782,7 @@ int validateAndProcessInput(int argc, char* argv[], int* k, int* dimension, int*
 
 /* 
  * Function: isValidInteger
- * ---------------------
+ * ------------------------
  * checks if a string represents a valid int
  *  
  * str: the string to be checked
