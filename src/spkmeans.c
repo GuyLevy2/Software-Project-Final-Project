@@ -399,6 +399,7 @@ int find_ij_pivot(int N, double*** A, int* i_p, int* j_p){
         }
     }
 
+    /* TODO https://moodle.tau.ac.il/mod/forum/discuss.php?d=127788 */
     if(max_i == 0 || max_j == 0){ /* if all of the off-diagonal elements are zeros */
         return 1;
     }
