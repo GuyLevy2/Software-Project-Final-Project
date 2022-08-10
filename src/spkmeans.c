@@ -394,6 +394,7 @@ int find_ij_pivot(int N, double*** A, int* i_p, int* j_p){
             if(fabs((*A)[i][j]) > max_offDiag){
                 max_i = i;
                 max_j = j;
+                max_offDiag = fabs((*A)[i][j]);
             }
         }
     }
