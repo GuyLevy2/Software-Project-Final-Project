@@ -671,15 +671,13 @@ int validateAndProcessInput(int argc, char* argv[], int* k, int* dimension, int*
     char *k_str;
     char *maxIter_str;
     int outputStrLen;
-    char c;
     int after_firstline;
-    int curr_dimension;
     double *vec;
     int vectors_index;
     int vectorList_index;
-    int i, j;
     FILE *fp1, *fp2;
-    int ch; /* Guy added because of fgetc func giving error EOF??? */
+    char *strNum;
+    char line[2048];
 
     if (argc > 5 || argc < 4){
         return 0;
@@ -745,40 +743,23 @@ int validateAndProcessInput(int argc, char* argv[], int* k, int* dimension, int*
         return 0;
     }
     
-    *dimension = 1;
+    *dimension = 0;
     *line_count = 0;
-    
     after_firstline = 0;
-    curr_dimension = 1;
  
-    for (ch = getc(fp1); ch != EOF; ch = getc(fp1)){ /* First run - dimension and number of vectors. */
-        c = (char) ch; /* Guy added because of fgetc func giving error EOF - mem leak??? */
-        if (c == ','){
+    while (fgets(line, 2048, fp1)){
+        strNum = strtok(line, ",");
+
+        while (strNum){
             if (after_firstline == 0){
                 *dimension += 1;
             }
-            else{
-                curr_dimension += 1;
-            }
-        }
 
-        if (c == '\n'){
-            *line_count = *line_count + 1;
-            after_firstline = 1;
-            
-            if(*dimension != curr_dimension && curr_dimension != 1){
-                fclose(fp1); /* Guy Memory leak */
-                return 0;
-            }
-            
-            curr_dimension = 1;
+            strNum = strtok(NULL, ",");
         }
-
-        /* if there is a char that is not a number or , or \n. */
-        if ((c != '.') && (c != '-') && (c != ',') && (c != '\n') && (isdigit(c) == 0)){
-            fclose(fp1); /* `Guy Memory leak problem */
-            return 0;
-        }
+        
+        after_firstline = 1;
+        *line_count += 1;
     }
     
     fclose(fp1);
@@ -793,27 +774,23 @@ int validateAndProcessInput(int argc, char* argv[], int* k, int* dimension, int*
     }
 
     *vectorsList = malloc(*line_count * sizeof(double*));
-    vec = malloc(*dimension * sizeof(double));
     vectors_index = 0;
     vectorList_index = 0;
     
-    for(i = 0; i < *line_count; i++){
-        for (j = 0; j < *dimension - 1; j++){
-            fscanf(fp2, "%lf,", &(vec[vectors_index]));
-            vectors_index++;
-        }
+    while (fgets(line, 2048, fp2)){
+        vec = malloc(*dimension * sizeof(double));
+        strNum = strtok(line, ",");
 
-        fscanf(fp2, "%lf\n", &(vec[vectors_index]));
-        vectors_index++;
+        while (strNum){
+            vec[vectors_index] = atof(strNum);
+            vectors_index++;
+            strNum = strtok(NULL, ",");
+        }
 
         (*vectorsList)[vectorList_index] = vec;
         vectorList_index++;
-        
         vectors_index = 0;
-        vec = malloc(*dimension * sizeof(double));
     }
-
-    free(vec); /* Guy Mem Testing */
 
     fclose(fp2);
 
