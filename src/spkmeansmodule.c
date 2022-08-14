@@ -107,29 +107,32 @@ static PyObject* fit(PyObject *self, PyObject *args)
     return Py_BuildValue("O", centroids_list_obj);
 }
 
+
+/* Setup Area */
+
 static PyMethodDef capiMethods[] = {
     {"eigengapHeuristic_fit",
-    (PyCFunction) fit,
+    (PyCFunction) eigengapHeuristic_fit,
     METH_VARARGS,
     PyDoc_STR("Eigengap Heuristic Algorithem")},
     {"kmeans_fit",
-    (PyCFunction) fit,
+    (PyCFunction) kmeans_fit,
     METH_VARARGS,
     PyDoc_STR("kmeans Algorithem")},
     {"wam_fit",
-    (PyCFunction) fit,
+    (PyCFunction) wam_fit,
     METH_VARARGS,
     PyDoc_STR("Weighted Adjacency Matrix Computaion")},
     {"ddg_fit",
-    (PyCFunction) fit,
+    (PyCFunction) ddg_fit,
     METH_VARARGS,
     PyDoc_STR("Diagonal Degree Matrix Computaion")},
     {"lnorm_fit",
-    (PyCFunction) fit,
+    (PyCFunction) lnorm_fit,
     METH_VARARGS,
     PyDoc_STR("Normalized Graph Laplacian Matrix Computaion")},
     {"jacobi_fit",
-    (PyCFunction) fit,
+    (PyCFunction) jacobi_fit,
     METH_VARARGS,
     PyDoc_STR("jacobi Alogorithem")},
     {NULL, NULL, 0, NULL}

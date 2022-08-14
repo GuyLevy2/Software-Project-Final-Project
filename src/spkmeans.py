@@ -51,6 +51,8 @@ def main():
 
         elif goal == "ddg":
             ddg = mksp.ddg_fit(N, dimension, fileContent)
+            
+            # Error handling
             if ddg == None:
                 raise Exception
 
