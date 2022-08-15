@@ -6,7 +6,7 @@
 #include <ctype.h>
 
 static PyObject* eigengapHeuristic_fit(PyObject *self, PyObject *args){
-
+    
 }
 
 static PyObject* kmeans_fit(PyObject *self, PyObject *args){
