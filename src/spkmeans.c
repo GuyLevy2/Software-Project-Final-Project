@@ -103,7 +103,7 @@ int ddg_func(int N, double*** wamMat, double*** outputDdgMat){
  * ddgMat: a pointer to the ddg matrix
  * lNormMat: a pointer to the output lNorm matrix
  * 
- * returns: NULL
+ * returns: 0
  */
 int lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** outputLNormMat){
     int i, j;
@@ -140,6 +140,8 @@ int lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** outputLNormM
             }
         }
     }
+
+    return 0;
 }
 
 /* 
@@ -162,8 +164,8 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenV
     int MAX_ROTATIONS = 100;
     int i = 0, j = 0, countRot = 0, k;
     double c = 0, s = 0;
-    double ***P = NULL, ***A = NULL, ***A_tag = NULL, ***tempMat = NULL;
     double EPSILON = 0.00001;
+    double ***P = NULL, ***A = NULL, ***A_tag = NULL, ***tempMat = NULL;
 
     /* initializing utility matrices */
     A = initMat(N);
@@ -672,15 +674,24 @@ double offCalc(int N, double*** mat){
  *  
  * N: the dimention of the given matrix (NxN)
  * 
- * returns: a pointer to the new matrix
+ * returns: a pointer to the new initializes matrix or NULL if an error has occurred
  */
 double*** initMat(int N){
     int i, j;
-    double** newMat = malloc(N * sizeof(double*)); // Guy - should we check if succeeded??? Liad - Yes, and if didn't we should return NULL.
+    double *vec;
+    double **newMat;
     
+    newMat = (double**)malloc(N * sizeof(double*)); // Guy - should we check if succeeded??? Liad - Yes, and if didn't we should return NULL.
+    if(newMat == NULL){
+        return NULL;
+    }
+
     for (i = 0; i < N; i++){
-        double* vec = malloc(N * sizeof(double));
-        
+        vec = (double*)malloc(N * sizeof(double));
+        if (vec == NULL){
+            return NULL;
+        }
+
         for (j = 0; j < N; j++){
             vec[j] = 0;
         }
@@ -696,7 +707,7 @@ double*** initMat(int N){
  * ---------------------
  * frees memory of a given matrix
  *  
- * N: the dimention of the given matrix (NxN)
+ * N: the number of rows of the given matrix (Nx*)
  * mat: the matrix to be freed
  * 
  * returns: NULL 
@@ -705,11 +716,9 @@ double*** initMat(int N){
  */
 int freeMat(int N, double*** mat){
     int i;
-
     for (i = 0; i < N; i++){
         free((*mat)[i]);
     }
-    
     free(*mat);
 }
 
