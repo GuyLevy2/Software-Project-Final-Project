@@ -1,4 +1,5 @@
 #define PY_SSIZE_T_CLEAN
+#include "spkmeans.c"
 #include <Python.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,62 +7,59 @@
 #include <ctype.h>
 
 static PyObject* eigengapHeuristic_fit(PyObject *self, PyObject *args){
+    int N, k, i;
+    double *eigenValues = NULL;
+    PyObject *eigenValues_obj;
     
+    if(!PyArg_ParseTuple(args, "iO", &N, &eigenValues_obj)) {
+        return Py_BuildValue("");
+    }
+
+    eigenValues = (double*)malloc(N*sizeof(double));
+    if(eigenValues == NULL){
+        return Py_BuildValue("");
+    }
+    
+    for (i = 0; i < N; i++){
+        eigenValues[i] = PyFloat_AsDouble(PyList_GetItem(eigenValues_obj, i));
+    }
+
+    k = eigenGap(N, &eigenValues);
+
+    free(eigenValues);
+
+    if(k == -1){
+        return Py_BuildValue("");
+    }
+
+    return Py_BuildValue("i", k);
 }
 
 static PyObject* kmeans_fit(PyObject *self, PyObject *args){
-    
-}
-
-static PyObject* wam_fit(PyObject *self, PyObject *args){
-    
-}
-
-static PyObject* ddg_fit(PyObject *self, PyObject *args){
-    
-}
-
-static PyObject* lnorm_fit(PyObject *self, PyObject *args){
-    
-}
-
-static PyObject* jacobi_fit(PyObject *self, PyObject *args){
-    
-}
-
-static PyObject* fit(PyObject *self, PyObject *args)
-{
-    int k;
-    int dimension;
-    int line_count;
-    int maxIter;
+    int k, dimension, line_count, maxIter, kmeans_success; 
+    int i,j;
     double EPSILON;
-    int kmeans_success;
     
     double** vectorsList;
     double* vector;
     double** centroids_list; /* output */
     
-    PyObject* vec_list_obj;
-    PyObject* vector_obj;
-    PyObject* coord_obj;
+    PyObject *vec_list_obj, *vector_obj, *coord_obj;
     
     PyObject* centroids_list_obj; /* output */
     PyObject* centroid_obj; /* output */
-
-    int i,j;
 
     if(!PyArg_ParseTuple(args, "iiiidO", &k, &dimension, &line_count, &maxIter, &EPSILON, &vec_list_obj)) {
         return Py_BuildValue("");
     }
 
-    vectorsList = (double**)malloc(sizeof(double**)*line_count);
+    vectorsList = (double**)malloc(sizeof(double*)*line_count);
     
     if(vectorsList == NULL)
         return Py_BuildValue("");
     
     for(i = 0; i < line_count; i++){
-        vector = (double*)malloc(sizeof(double*)*dimension);
+        vector = (double*)malloc(sizeof(double)*dimension);
         
         if (vector == NULL)
             return Py_BuildValue("");
@@ -81,7 +79,6 @@ static PyObject* fit(PyObject *self, PyObject *args)
     if (centroids_list == NULL){
         return Py_BuildValue("");
     }
-
 
     kmeans_success = kmeans_c(k, dimension, line_count, maxIter, EPSILON, vectorsList, &centroids_list);
     if (kmeans_success == 0){
@@ -105,6 +102,31 @@ static PyObject* fit(PyObject *self, PyObject *args)
     free(centroids_list);    
 
     return Py_BuildValue("O", centroids_list_obj);
+}
+
+static PyObject* wam_fit(PyObject *self, PyObject *args){
+    int i, j, N, dimention, success;
+    double **vectorsList = NULL, **wamMat = NULL;
+
+    success = wam_func(&vectorsList, N, dimention, wamMat);
+    if(success)
+}
+
+static PyObject* ddg_fit(PyObject *self, PyObject *args){
+    
+}
+
+static PyObject* lnorm_fit(PyObject *self, PyObject *args){
+    
+}
+
+static PyObject* jacobi_fit(PyObject *self, PyObject *args){
+    
+}
+
+static PyObject* fit(PyObject *self, PyObject *args)
+{
+    
 }
 
 
