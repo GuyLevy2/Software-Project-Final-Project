@@ -1,29 +1,83 @@
-#include "spkmeans.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
 int main(int argc, char *argv[]) {
-    int k = 0, dimension, line_count;
-    int maxIter, iteration_number;
-    char* inputFile, *outputFile;
-    double** vectorsList, **cluster, **centroidsList;;
+    int dimension, line_count;
+    char* inputFile;
+    double** vectorsList;
     double EPSILON = 0.001;
-    int inputError, writeSuccess, freeSuccess;
-    double*** clusterList;
-    int* index_to_insert;
+    int inputError;
     int i, j;
-    double* vec, *centroid_i;
-    double deltaMiu;
+    char* goal;
+    double*** wamMat;
+    double*** ddgMat;
+    double*** LNormMat;
 
-    inputError = validateAndProcessInput(argc, argv, &k, &dimension, &line_count, &maxIter, &inputFile, &outputFile, &vectorsList);
+
+    inputError = validateAndProcessInput(argc, argv, &dimension, &line_count, &inputFile, &vectorsList, &goal);
     
     if (!inputError){
         printf("Invalid Input!");
         return 1;
     }
+    
+    
+    /* beginning of algorithm */
+    wamMat = initMat(line_count);
+    wam_func(vectorsList, line_count, dimension, wamMat);
+    
+    /* in case goal == wam:
+     print the wam matrix:
+     free memory and abort.
+     else - continue with the next goal */
+    if (strcmp(goal, "wam") == 0){
+        printMat(line_count, line_count, wamMat);
+        
+        freeMat(line_count, wamMat);
+        freeMat(line_count, &vectorsList);
 
-    // Guy - remember to free!!???
+        return 0;
+    }
+
+    ddgMat = initMat(line_count);
+    ddg_func(line_count, wamMat, ddgMat);
+
+    /* in case goal == ddg:
+     print the ddg matrix:
+     free memory and abort.
+     else - continue with the next goal */
+    if (strcmp(goal, "ddg") == 0){
+        printMat(line_count, line_count, ddgMat);
+
+        freeMat(line_count, wamMat);
+        freeMat(line_count, ddgMat);
+        freeMat(line_count, &vectorsList);
+
+        return 0;
+    }
+
+    LNormMat = initMat(line_count);
+    lNorm_func(line_count, wamMat, ddgMat, LNormMat);
+
+    /* in case goal == lnorm:
+     print the lnorm matrix:
+     free memory and abort.
+     else - continue with the next goal */
+    if (strcmp(goal, "lnorm") == 0){
+        printMat(line_count, line_count, LNormMat);
+        
+        freeMat(line_count, wamMat);
+        freeMat(line_count, ddgMat);
+        freeMat(line_count, LNormMat);
+        freeMat(line_count, &vectorsList);
+
+        return 0;
+    }
+
+    /* TODO - need to complete jacobi part and output */
+
+    /* TODO - remember to free */
 }
 
 
@@ -289,6 +343,7 @@ int kmeans_c(int k, int dimension, int line_count, int maxIter, double EPSILON, 
 
     return 1;
 }
+
 
 /* Granular Utility Functions */
 
@@ -722,6 +777,31 @@ int freeMat(int N, double*** mat){
     free(*mat);
 }
 
+/* 
+ * Function: printMat
+ * ---------------------
+ * prints the input matrix
+ *  
+ * m: the number of rows of the given matrix
+ * n: the number of columns of the given matrix
+ * mat: the matrix to be printed
+ * 
+ * returns: NULL 
+ * 
+ */
+void printMat(int m, int n, double*** mat){
+    int i,j;
+
+    for(i = 0; i < m; ++i){
+        for (j = 0; j < n - 1; ++j){
+            printf("%.4f", mat[i][j]);
+            printf(",");
+        }
+        printf("%.4f", mat[i][n-1]);
+        printf("\n");
+    }
+}
+
 
 /* Functions Imported From Previous Excercises */
 
@@ -732,20 +812,15 @@ int freeMat(int N, double*** mat){
  *  
  * argc: argc
  * argv: argv
- * k: a pointer to k
  * dimension: a pointer to the dimension
  * line_count: a pointer to N
- * maxIter: a pointer to the max iterations number
  * inputFile: a pointer to the input file path
- * outputfile: a pointer to the output file path
  * vectors_list: a pointer to the list of all N vectors
+ * goal: a pointer to the goal string
  * 
  * returns: 0 if the input is invalid and 1 if the input is valid
  */
-int validateAndProcessInput(int argc, char* argv[], int* k, int* dimension, int* line_count, int* maxIter, char** inputFile, char** outputFile, double*** vectorsList){
-    char *k_str;
-    char *maxIter_str;
-    int outputStrLen;
+int validateAndProcessInput(int argc, char* argv[], int* dimension, int* line_count, char** inputFile, double*** vectorsList, char** goal){
     int after_firstline;
     double *vec;
     int vectors_index;
@@ -754,64 +829,22 @@ int validateAndProcessInput(int argc, char* argv[], int* k, int* dimension, int*
     char *strNum;
     char line[2048];
 
-    if (argc > 5 || argc < 4){
-        return 0;
-    }
 
-    if (argc == 4){
-        k_str = argv[1];
-        maxIter_str = "200";
-        *inputFile = argv[2];
-        *outputFile = argv[3];
-    }
-
-    if (argc == 5){
-        k_str = argv[1];
-        maxIter_str = argv[2];
-        *inputFile = argv[3];
-        *outputFile = argv[4];
-    }
-
-    if(!isValidInteger(k_str)){ /* checking that k_str is a valid number - may cause problems and might not be needed? */
+    if (argc != 3){
         return 0;
     }
     
-    *k = atoi(k_str);
+    *goal = argv[1];
+    if (strcmp(*goal, "wam") != 0 &&
+        strcmp(*goal, "ddg") != 0 &&
+        strcmp(*goal, "lnorm") != 0 &&
+        strcmp(*goal, "jacobi") != 0){
     
-    if(!isValidInteger(maxIter_str)){ /* checking that str is a valid number - is it needed? */
-        return 0;
-    }
-    
-    *maxIter = atoi(maxIter_str);
-
-    if (*k <= 1 || *maxIter < 0){
         return 0;
     }
 
-    /* checking that the output file is in the right format */
-    outputStrLen = 0;
-    while ((*outputFile)[outputStrLen] != '\0'){
-        outputStrLen++;
-    }
 
-    if (outputStrLen < 5){
-        return 0;
-    }
-
-    if (((*outputFile)[outputStrLen - 1] != 't' 
-        || (*outputFile)[outputStrLen - 2] != 'x' 
-        || (*outputFile)[outputStrLen - 3] != 't' 
-        || (*outputFile)[outputStrLen - 4] != '.')
-
-        && ((*outputFile)[outputStrLen - 1] != 'c' 
-        || (*outputFile)[outputStrLen - 2] != 's' 
-        || (*outputFile)[outputStrLen - 3] != 'v' 
-        || (*outputFile)[outputStrLen - 4] != '.'
-        )){
-        
-        return 0;
-    }
-
+    *inputFile = argv[2];
     
     fp1 = fopen(*inputFile, "r"); /* First open */
     if (fp1 == NULL){ /* if can't open the file. */
@@ -838,10 +871,6 @@ int validateAndProcessInput(int argc, char* argv[], int* k, int* dimension, int*
     }
     
     fclose(fp1);
-    
-    if (*k >= *line_count){ /* if K >= N */
-            return 0;
-    } 
 
     fp2 = fopen(*inputFile, "r"); /* Second open */
     if (fp2 == NULL){ /* if can't open the file. */

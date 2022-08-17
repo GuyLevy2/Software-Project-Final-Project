@@ -11,14 +11,8 @@
 - spkmeans.c:
     - main (full program, without ++ because it is a python init)
 
-- setup.py:
-    - finish
-
-- spkmeans.h:
-    - fill in the functions' names
-
 - spkmeans.py:
-    - kmeansPP - do we need to keep the HW01 imp?
+    - can we implement steps 5,6 in python?
 
 
 

@@ -1,5 +1,5 @@
 #define PY_SSIZE_T_CLEAN
-#include "spkmeans.c"
+#include "spkmeans.h"
 #include <Python.h>
 #include <stdio.h>
 #include <stdlib.h>
