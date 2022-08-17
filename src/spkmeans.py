@@ -19,15 +19,42 @@ def main():
         goal = processedArgs[5]
 
         if goal == "spk":
+            # (1) Form the weighted adjacency matrix W from X (a list of vectors)
+            X = fileContent
+            wam = mksp.wam_fit(N, dimension, X)
+            # Error handling
+            if wam == None:
+                raise Exception
+
+            # (2) Compute the normalized graph Laplacian Lnorm
+            ddg = mksp.ddg_fit(N, wam)
+            # Error handling
+            if ddg == None:
+                raise Exception
+
+            lnorm = mksp.lnorm_fit(N, wam, ddg)
+            # Error handling
+            if lnorm == None: 
+                raise Exception
+
+            # (3) Determine k and obtain the largest k eigenvectors Lnorm    
+            eigenValues, eigenVectors = mksp.jacobi_fit(N, lnorm)
+            # Error handling
+            if eigenValues == None or eigenVectors == None:
+                raise Exception
+
             if K == 0:  # computes K by the eigengap heuristic method
-                K = mksp.eigengapHeuristic_fit(N, dimension, fileContent)
+                K = mksp.eigengapHeuristic_fit(N, eigenValues)
                 # Error handling
                 if K == None:
                     raise Exception
             
-            # K-means++ algorithem
-            returnValue_K_meansPP = k_meansPP(fileContent, N, K, dimension)
+            # (4) Let U be the matrix containing the largest k eigenvectors as columns (NxK)
             
+            # (5) Form the matrix T from U by renormalizing each of U's rows to have unit length
+
+            # (6) Treating each row of T as a point in Rk, cluster them into k clusters via the K-means algorithm
+            returnValue_K_meansPP = k_meansPP(fileContent, N, K, dimension)            
             # Error handling
             if returnValue_K_meansPP == None:
                 raise Exception
