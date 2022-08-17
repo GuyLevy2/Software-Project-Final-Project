@@ -18,6 +18,68 @@ def main():
         fileContent = processedArgs[4]
         goal = processedArgs[5]
 
+        if goal == "spk":
+            # The matrix T is after stage 5 of the spk algorithem
+            T = mksp.spk_fit(N, dimension, fileContent)
+            if T == None:
+                raise Exception
+            K = np.asarray(T).shape[1] # The final K in the number of columns of the matrix T
+            # (6) Treating each row of T as a point in Rk, cluster them into k clusters via the K-means algorithm
+            returnValue_K_meansPP = k_meansPP(T, N, K, K)            
+            # Error handling
+            if returnValue_K_meansPP == None:
+                raise Exception
+            
+            centroids_keys = returnValue_K_meansPP[0]
+            centroids_list = returnValue_K_meansPP[1]
+            
+            # Output - printing
+            print(','.join(str(item) for item in centroids_keys))
+            printFloatMatrix_format(K, centroids_list)
+            
+        elif goal == "wam":
+            wam = mksp.wam_fit(N, dimension, fileContent)
+            
+            # Error handling
+            if wam == None:
+                raise Exception
+            
+            # Output - printing
+            printFloatMatrix_format(N, wam)
+
+        elif goal == "ddg":
+            ddg = mksp.ddg_fit(N, dimension, fileContent)
+            
+            # Error handling
+            if ddg == None:
+                raise Exception
+
+            # Output - printing
+            printFloatMatrix_format(N, ddg)
+        
+        elif goal == "lnorm":
+            lnorm = mksp.lnorm_fit(N, dimension, fileContent)
+            
+            # Error handling
+            if lnorm == None: 
+                raise Exception
+            
+            # Output - printing
+            printFloatMatrix_format(N, lnorm)
+
+        elif goal == "jacobi":
+            eigenValues, eigenVectors = mksp.jacobi_fit(N, fileContent)
+            
+            # Error handling
+            if eigenValues == None or eigenVectors == None:
+                raise Exception
+
+            # Output - printing
+            print(','.join(str("%.4f"%item) for item in eigenValues))
+            printFloatMatrix_format(N, eigenVectors)
+    
+    
+        """ OPTION B
         if goal == "jacobi":
             eigenValues, eigenVectors = mksp.jacobi_fit(N, fileContent)
             
@@ -73,10 +135,10 @@ def main():
             U = largest_K_eigenvectors(K, eigenVectors, eigenValues)
 
             # (5) Form the matrix T from U by renormalizing each of U's rows to have unit length
-
+            T = normalizeU(U)
 
             # (6) Treating each row of T as a point in Rk, cluster them into k clusters via the K-means algorithm
-            returnValue_K_meansPP = k_meansPP(fileContent, N, K, K)            
+            returnValue_K_meansPP = k_meansPP(T, N, K, K)            
             # Error handling
             if returnValue_K_meansPP == None:
                 raise Exception
@@ -87,6 +149,7 @@ def main():
             # Output - printing
             print(','.join(str(item) for item in centroids_keys))
             printFloatMatrix_format(K, centroids_list)
+        """
     except:
         print("An Error Has Occurred")
         return 

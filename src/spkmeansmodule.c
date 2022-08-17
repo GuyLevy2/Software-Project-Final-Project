@@ -112,6 +112,112 @@ static PyObject* kmeans_fit(PyObject *self, PyObject *args){
 }
 
 /* 
+ * Function: spk_fit
+ * -----------------
+ * API function for executing the spk akgorithem steps 1-5
+ * 
+ * Input: PyObject arguments:
+ * (1) the dimension of each vector (int)
+ * (2) the number of vectors (int)
+ * (3) the number of clusters k (or k=0 for eigengup heuristic method)
+ * (3) A list of vectors (as float)
+ * 
+ * Output: the finel T matrix (step 5)
+ * returns: PyObject as 2-dimensional list of floats (matrix)
+ */
+static PyObject* spk_fit(PyObject *self, PyObject *args){
+    int N, dimension, K, success;
+    double **vectorsList = NULL, **wamMat = NULL, **ddgMat = NULL;
+    double **lnormMat = NULL, **eigenVectors = NULL, *eigenValues = NULL;
+    double **U, **T;
+    PyObject *vec_list_obj;     /* input */
+    PyObject *T_Matrix_obj;    /* output */
+
+    /* Get input */
+    if(!PyArg_ParseTuple(args, "iiIO", &dimension, &N, &K &vec_list_obj)) {
+        return Py_BuildValue("");
+    }
+
+    vectorsList = *(Create_C_Mat_From_PyObj(N, dimension, vec_list_obj));
+    if (vectorsList == NULL){
+        return Py_BuildValue("");
+    }
+
+    /* Body */
+    /* WAM */
+    wamMat = *(initMat(N));
+    if (wamMat == NULL){
+        return Py_BuildValue("");
+    }
+    success = wam_func(&vectorsList, N, dimension, &wamMat);
+    if(success == 1){
+        return Py_BuildValue("");
+    }
+
+    /* DDG */
+    ddgMat = *(initMat(N));
+    if (ddgMat == NULL){
+        return Py_BuildValue("");
+    }
+    success = ddg_func(N, &wamMat, &ddgMat);
+    if(success == 1){
+        return Py_BuildValue("");
+    }
+
+    /* lnorm */
+    lnormMat = *(initMat(N));
+    if (lnormMat == NULL){
+        return Py_BuildValue("");
+    }
+    success = lNorm_func(N, &wamMat, &ddgMat, &lnormMat);
+    if(success == 1){
+        return Py_BuildValue("");
+    }
+
+    /* eigenValues & eigenVectors */
+    eigenValues = (double*)malloc(N * sizeof(double));
+    if (eigenValues == NULL){
+        return Py_BuildValue("");
+    }
+    eigenVectors = *(initMat(N));
+    if (eigenVectors == NULL){
+        return Py_BuildValue("");
+    }
+    success = jacobi_func(N, &lnormMat, &eigenVectors, &eigenValues);
+    if(success == 1){
+        return Py_BuildValue("");
+    }
+
+    /* eigenGap Heuristic method */
+    if (K == 0){
+        K = eigenGap(N, &eigenValues);
+    }
+
+    /* U = largest_k_eigenvectors */
+    /* Missing implimentation */
+
+    /* T = normlized(U) (NxK)*/
+    /* Missing implimentation */
+
+    /* Free vectorsList */
+    freeMat(N, &vectorsList);
+
+    /* Build output */
+    T_Matrix_obj = Create_PyObj_Mat_From_C(N, K, &T);
+    
+    /* free wamMat */
+    freeMat(N, &wamMat);
+    freeMat(N, &ddgMat);
+    freeMat(N, &lnormMat);
+    free(eigenValues);
+    freeMat(N, &eigenVectors);
+    freeMat(N, &U);
+    freeMat(N, &T);
+
+    return Py_BuildValue("O", T_Matrix_obj);
+}
+
+/* 
  * Function: wam_fit
  * -----------------
  * API function for computing the Weighted Adjacency matrix
@@ -131,7 +237,7 @@ static PyObject* wam_fit(PyObject *self, PyObject *args){
     PyObject *wamMatrix_obj;    /* output */
 
     /* Get input */
-    if(!PyArg_ParseTuple(args, "iiO", &dimension, &N, &vec_list_obj)) {
+    if(!PyArg_ParseTuple(args, "iiO", &N, &dimension, &vec_list_obj)) {
         return Py_BuildValue("");
     }
 
@@ -175,7 +281,7 @@ static PyObject* wam_fit(PyObject *self, PyObject *args){
  * Output: the finel DDG of the given WAM
  * returns: PyObject as 2-dimensional list of floats (matrix)
  */
-static PyObject* ddg_fit(PyObject *self, PyObject *args){
+static PyObject* ddg_fit_B(PyObject *self, PyObject *args){ /* Option B */
     int N, success;
     double **ddgMat = NULL, **wamMat = NULL;
     PyObject *wamMat_obj;     /* input */
@@ -213,6 +319,53 @@ static PyObject* ddg_fit(PyObject *self, PyObject *args){
 
     return Py_BuildValue("O", ddgMat_obj);
 }
+static PyObject* ddg_fit(PyObject *self, PyObject *args){ /* Option A */
+    int N, dimension, success;
+    double **vectorsList = NULL, **ddgMat = NULL, **wamMat = NULL;
+    PyObject *vec_list_obj;     /* input */
+    PyObject *ddgMat_obj;    /* output */
+
+    /* Input */
+    if(!PyArg_ParseTuple(args, "iiO", &N, &dimension, &vec_list_obj)) {
+        return Py_BuildValue("");
+    }
+    
+    vectorsList = *(Create_C_Mat_From_PyObj(N, dimension, vec_list_obj));
+    if (vectorsList == NULL){
+        return Py_BuildValue("");
+    }
+
+    /* Body */
+    wamMat = *(initMat(N));
+    if (wamMat == NULL){
+        return Py_BuildValue("");
+    }
+    success = wam_func(&vectorsList, N, dimension, &wamMat);
+    if(success == 1){
+        return Py_BuildValue("");
+    }
+
+    ddgMat = *(initMat(N));
+    if (ddgMat == NULL){
+        return Py_BuildValue("");
+    }
+    success = ddg_func(N, &wamMat, &ddgMat);
+    if(success == 1){
+        return Py_BuildValue("");
+    }
+    
+    /* Free */
+    freeMat(N, &vectorsList);
+    freeMat(N, &wamMat);
+
+    /* Output */
+    ddgMat_obj = Create_PyObj_Mat_From_C(N, N, &ddgMat);
+    
+    /* Free ddgMat */
+    freeMat(N, &ddgMat);
+
+    return Py_BuildValue("O", ddgMat_obj);
+}
 
 /* 
  * Function: lnorm_fit
@@ -227,7 +380,7 @@ static PyObject* ddg_fit(PyObject *self, PyObject *args){
  * Output: the L-norm matrix of the given WAM and DDG
  * returns: PyObject as 2-dimensional list of floats (matrix)
  */
-static PyObject* lnorm_fit(PyObject *self, PyObject *args){
+static PyObject* lnorm_fit_B(PyObject *self, PyObject *args){ /* Option B */
     int N, success;
     double **ddgMat = NULL, **wamMat = NULL, **lnormMat = NULL;
     PyObject *wamMat_obj, *ddgMat_obj;     /* input */
@@ -260,6 +413,64 @@ static PyObject* lnorm_fit(PyObject *self, PyObject *args){
     }
     
     /* Free wamMat and ddgMat */
+    freeMat(N, &wamMat);
+    freeMat(N, &ddgMat);
+
+    /* Output */
+    lnormMat_obj = Create_PyObj_Mat_From_C(N, N, &lnormMat);
+    
+    /* Free lnormMat */
+    freeMat(N, &lnormMat);
+
+    return Py_BuildValue("O", lnormMat_obj);
+}
+static PyObject* lnorm_fit(PyObject *self, PyObject *args){ /* Option A */
+    int N, dimension, success;
+    double **vectorsList = NULL, **ddgMat = NULL, **wamMat = NULL;
+    double **lnormMat = NULL;
+    PyObject *vec_list_obj;     /* input */
+    PyObject *lnormMat_obj;    /* output */
+
+    /* Input */
+    if(!PyArg_ParseTuple(args, "iiO", &N, &dimension, &vec_list_obj)) {
+        return Py_BuildValue("");
+    }
+    
+    vectorsList = *(Create_C_Mat_From_PyObj(N, dimension, vec_list_obj));
+    if (vectorsList == NULL){
+        return Py_BuildValue("");
+    }
+
+    /* Body */
+    wamMat = *(initMat(N));
+    if (wamMat == NULL){
+        return Py_BuildValue("");
+    }
+    success = wam_func(&vectorsList, N, dimension, &wamMat);
+    if(success == 1){
+        return Py_BuildValue("");
+    }
+
+    ddgMat = *(initMat(N));
+    if (ddgMat == NULL){
+        return Py_BuildValue("");
+    }
+    success = ddg_func(N, &wamMat, &ddgMat);
+    if(success == 1){
+        return Py_BuildValue("");
+    }
+
+    lnormMat = *(initMat(N));
+    if (lnormMat == NULL){
+        return Py_BuildValue("");
+    }
+    success = lNorm_func(N, &wamMat, &ddgMat, &lnormMat);
+    if(success == 1){
+        return Py_BuildValue("");
+    }
+    
+    /* Free */
+    freeMat(N, &vectorsList);
     freeMat(N, &wamMat);
     freeMat(N, &ddgMat);
 
