@@ -18,25 +18,45 @@ def main():
         fileContent = processedArgs[4]
         goal = processedArgs[5]
 
-        if goal == "spk":
+        if goal == "jacobi":
+            eigenValues, eigenVectors = mksp.jacobi_fit(N, fileContent)
+            
+            # Error handling
+            if eigenValues == None or eigenVectors == None:
+                raise Exception
+
+            # Output - printing
+            print(','.join(str("%.4f"%item) for item in eigenValues))
+            printFloatMatrix_format(N, eigenVectors)
+        else:
             # (1) Form the weighted adjacency matrix W from X (a list of vectors)
             X = fileContent
             wam = mksp.wam_fit(N, dimension, X)
             # Error handling
             if wam == None:
                 raise Exception
+            if goal == "wam":
+                printFloatMatrix_format(N, wam)
+                return
 
             # (2) Compute the normalized graph Laplacian Lnorm
             ddg = mksp.ddg_fit(N, wam)
             # Error handling
             if ddg == None:
                 raise Exception
+            if goal == "ddg":
+                printFloatMatrix_format(N, ddg)
+                return
 
             lnorm = mksp.lnorm_fit(N, wam, ddg)
             # Error handling
             if lnorm == None: 
                 raise Exception
+            if goal == "lnorm":
+                printFloatMatrix_format(N, lnorm)
+                return
 
+            # goal = "spk"
             # (3) Determine k and obtain the largest k eigenvectors Lnorm    
             eigenValues, eigenVectors = mksp.jacobi_fit(N, lnorm)
             # Error handling
@@ -50,11 +70,13 @@ def main():
                     raise Exception
             
             # (4) Let U be the matrix containing the largest k eigenvectors as columns (NxK)
-            
+            U = largest_K_eigenvectors(K, eigenVectors, eigenValues)
+
             # (5) Form the matrix T from U by renormalizing each of U's rows to have unit length
 
+
             # (6) Treating each row of T as a point in Rk, cluster them into k clusters via the K-means algorithm
-            returnValue_K_meansPP = k_meansPP(fileContent, N, K, dimension)            
+            returnValue_K_meansPP = k_meansPP(fileContent, N, K, K)            
             # Error handling
             if returnValue_K_meansPP == None:
                 raise Exception
@@ -65,53 +87,20 @@ def main():
             # Output - printing
             print(','.join(str(item) for item in centroids_keys))
             printFloatMatrix_format(K, centroids_list)
-
-        elif goal == "wam":
-            wam = mksp.wam_fit(N, dimension, fileContent)
-            
-            # Error handling
-            if wam == None:
-                raise Exception
-            
-            # Output - printing
-            printFloatMatrix_format(N, wam)
-
-        elif goal == "ddg":
-            ddg = mksp.ddg_fit(N, dimension, fileContent)
-            
-            # Error handling
-            if ddg == None:
-                raise Exception
-
-            # Output - printing
-            printFloatMatrix_format(N, ddg)
-        
-        elif goal == "lnorm":
-            lnorm = mksp.lnorm_fit(N, dimension, fileContent)
-            
-            # Error handling
-            if lnorm == None: 
-                raise Exception
-            
-            # Output - printing
-            printFloatMatrix_format(N, lnorm)
-
-        elif goal == "jacobi":
-            eigenValues, eigenVectors = mksp.jacobi_fit(N, fileContent)
-            
-            # Error handling
-            if eigenValues == None or eigenVectors == None:
-                raise Exception
-
-            # Output - printing
-            print(','.join(str("%.4f"%item) for item in eigenValues))
-            printFloatMatrix_format(N, eigenVectors)
-    
     except:
         print("An Error Has Occurred")
         return 
     
     return 
+
+def largest_K_eigenvectors(K, eigenVectors, eigenValues):
+    #missing implimatation
+    eigenVectors = np.asarray(eigenVectors)
+    eigenValues = np.asarray(eigenValues)
+    eigenV_t = eigenVectors.transpose()
+    dic = dict(zip(eigenValues, eigenV_t))
+
+    return U
 
 def printFloatMatrix_format(numOfRows, matrix):
     """ 
