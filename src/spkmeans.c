@@ -221,6 +221,7 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenV
     double EPSILON = 0.00001;
     double ***P = NULL, ***A = NULL, ***A_tag = NULL, ***tempMat = NULL;
 
+    /* TODO free memory in case of error */
     /* initializing utility matrices */
     A = initMat(N);
     if (A == NULL){
@@ -363,17 +364,29 @@ int eigenGap(int N, double** eigenValues){
     int i;
     double delta;
     double maxDelta = -1;
+    double *eigenValuesDup = NULL;
 
-    qsort(*eigenValues, N, sizeof(double), eigenComp);
+    /* Creating a copy of eigenValues - voinding currapt the given eigenValues */
+    eigenValuesDup = (double*)malloc(N * sizeof(double));
+    if (eigenValuesDup == NULL){
+        return -1;
+    }
+    for (i = 0; i < N; i++){
+        eigenValuesDup[i] = (*eigenValues)[i];
+    }
+
+    qsort(eigenValuesDup, N, sizeof(double), eigenComp); 
 
     for (i = 0; i < floor(N/2); i++){
-        delta = fabs((*eigenValues)[i+1] - (*eigenValues)[i]);
+        delta = fabs(eigenValuesDup[i+1] - eigenValuesDup[i]);
         
         if (delta > maxDelta){
             maxDelta = delta;
             k = i;
         }
     }
+
+    free(eigenValuesDup);
     
     return k;
 }
@@ -673,7 +686,7 @@ int computeA_tag(int N, int i, int j, double*** A, double c, double s, double***
     a_ij = (*A)[i][j];
 
     (*A_tag)[i][i] = c_squared*a_ii + s_squared*a_jj - 2*s*c*a_ij;
-    (*A_tag)[j][j] = s_squared*a_ii + c_squared-a_jj + 2*s*c*a_ij;
+    (*A_tag)[j][j] = s_squared*a_ii + c_squared*a_jj + 2*s*c*a_ij;
     (*A_tag)[i][j] = 0;
     (*A_tag)[j][i] = 0;
 

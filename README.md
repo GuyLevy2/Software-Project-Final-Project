@@ -18,3 +18,5 @@
 
 - TESTING
 
+TODO 2 (liad)
+Free allocated memory in cases of detected errors during the run of the programm?

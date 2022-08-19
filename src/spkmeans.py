@@ -36,7 +36,7 @@ def main():
             # Output - printing
             print(','.join(str(item) for item in centroids_keys))
             printFloatMatrix_format(K, centroids_list)
-            
+
         elif goal == "wam":
             wam = mksp.wam_fit(N, dimension, fileContent)
             
@@ -267,7 +267,6 @@ def k_meansPP(vectorsList, N, K, dimension):
     
     #return [centroids_keys, centroids_list] TODO not need. there is no key coulmn
     return [centroids_indexes, centroids_list]
-
 
 def validateAndProcessInput(argsList):
     """ 
