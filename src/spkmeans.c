@@ -771,6 +771,42 @@ double*** initMat(int N){
 }
 
 /* 
+ * Function: initMatMN
+ * ---------------------
+ * initizlises a zero - matrix in dimension MxN
+ *  
+ * N: the dimention of the given matrix (MxN)
+ * M: the dimention of the given matrix (MxN)
+ * 
+ * returns: a pointer to the new initializes matrix or NULL if an error has occurred
+ */
+double*** initMatMN(int M, int N){
+    int i, j;
+    double *vec;
+    double **newMat;
+    
+    newMat = (double**)malloc(M * sizeof(double*)); // Guy - should we check if succeeded??? Liad - Yes, and if didn't we should return NULL.
+    if(newMat == NULL){
+        return NULL;
+    }
+
+    for (i = 0; i < N; i++){
+        vec = (double*)malloc(N * sizeof(double));
+        if (vec == NULL){
+            return NULL;
+        }
+
+        for (j = 0; j < N; j++){
+            vec[j] = 0;
+        }
+
+        newMat[i] = vec;
+    }
+
+    return &newMat;
+}
+
+/* 
  * Function: freeMat
  * ---------------------
  * frees memory of a given matrix

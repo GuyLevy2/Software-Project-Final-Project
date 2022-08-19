@@ -73,8 +73,9 @@ static PyObject* kmeans_fit(PyObject *self, PyObject *args){
     int k, dimension, line_count, maxIter, kmeans_success; 
     int i,j;
     double EPSILON;
-    double **vectorsList;
-    double **centroids_list;
+    double **vectorsList, **centroids_list;
+    double ***retInitMat = NULL; /* The return pointer to matrix which back after call to initMat */
+
     PyObject *vec_list_obj;
     PyObject *centroids_list_obj; /* output */
 
@@ -83,10 +84,11 @@ static PyObject* kmeans_fit(PyObject *self, PyObject *args){
         return Py_BuildValue("");
     }
 
-    vectorsList = *(Create_C_Mat_From_PyObj(N, dimension, vec_list_obj));
-    if(vectorsList == NULL){
+    retInitMat = Create_C_Mat_From_PyObj(N, dimension, vec_list_obj);
+    if(retInitMat == NULL){
         return Py_BuildValue("");
     }
+    vectorsList = *retInitMat;
     
     /* Body */
     centroids_list = malloc(k * sizeof(double*));   /* The inner vectors are initialized in kmeans_c function !!! */
@@ -129,6 +131,7 @@ static PyObject* spk_fit(PyObject *self, PyObject *args){
     int N, dimension, K, success;
     double **vectorsList = NULL, **wamMat = NULL, **ddgMat = NULL;
     double **lnormMat = NULL, **eigenVectors = NULL, *eigenValues = NULL;
+    double ***retInitMat = NULL; /* The return pointer to matrix which back after call to initMat */
     double **U, **T;
     PyObject *vec_list_obj;     /* input */
     PyObject *T_Matrix_obj;    /* output */
@@ -138,80 +141,105 @@ static PyObject* spk_fit(PyObject *self, PyObject *args){
         return Py_BuildValue("");
     }
 
-    vectorsList = *(Create_C_Mat_From_PyObj(N, dimension, vec_list_obj));
-    if (vectorsList == NULL){
+    retInitMat = Create_C_Mat_From_PyObj(N, dimension, vec_list_obj);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    vectorsList = *retInitMat;
 
     /* Body */
     /* WAM */
-    wamMat = *(initMat(N));
-    if (wamMat == NULL){
+    retInitMat = initMat(N);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    wamMat = *retInitMat;
     success = wam_func(&vectorsList, N, dimension, &wamMat);
     if(success == 1){
         return Py_BuildValue("");
     }
 
     /* DDG */
-    ddgMat = *(initMat(N));
-    if (ddgMat == NULL){
+    retInitMat = initMat(N);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    ddgMat = *retInitMat;
     success = ddg_func(N, &wamMat, &ddgMat);
     if(success == 1){
         return Py_BuildValue("");
     }
 
     /* lnorm */
-    lnormMat = *(initMat(N));
-    if (lnormMat == NULL){
+    retInitMat = initMat(N);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    lnormMat = *retInitMat;
     success = lNorm_func(N, &wamMat, &ddgMat, &lnormMat);
     if(success == 1){
         return Py_BuildValue("");
     }
 
-    /* eigenValues & eigenVectors */
+    /* eigenValues & eigenVectors (Jacobi algo) */
     eigenValues = (double*)malloc(N * sizeof(double));
     if (eigenValues == NULL){
         return Py_BuildValue("");
     }
-    eigenVectors = *(initMat(N));
-    if (eigenVectors == NULL){
+    retInitMat = initMat(N);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    eigenVectors = *retInitMat;
     success = jacobi_func(N, &lnormMat, &eigenVectors, &eigenValues);
     if(success == 1){
         return Py_BuildValue("");
     }
 
-    /* eigenGap Heuristic method */
+    /* eigenGap Heuristic method (in case of k=0) */
     if (K == 0){
         K = eigenGap(N, &eigenValues);
     }
 
     /* U = largest_k_eigenvectors */
-    /* Missing implimentation */
+    success = sortEigenValuesAndEigenVectors(N, &eigenValues, &eigenVectors);
+    if(success == 1){
+        return Py_BuildValue("");
+    }
+    retInitMat = initMatMN(N, K);
+    if (retInitMat == NULL){
+        return Py_BuildValue("");
+    }
+    U = *retInitMat;
+    success = Fill_K_LargestEigenVectors(N, K, &eigenVectors, &U);
+    if(success == 1){
+        return Py_BuildValue("");
+    }
 
-    /* T = normlized(U) (NxK)*/
-    /* Missing implimentation */
+    /* T = renormlized(U) */
+    retInitMat = initMatMN(N, K);
+    if (retInitMat == NULL){
+        return Py_BuildValue("");
+    }
+    T = *retInitMat;
+    success = ReNormalizedRows(N, K, &U, &T);
+    if(success == 1){
+        return Py_BuildValue("");
+    }
 
-    /* Free vectorsList */
+    /* Free */
     freeMat(N, &vectorsList);
-
-    /* Build output */
-    T_Matrix_obj = Create_PyObj_Mat_From_C(N, K, &T);
-    
-    /* free wamMat */
     freeMat(N, &wamMat);
     freeMat(N, &ddgMat);
     freeMat(N, &lnormMat);
     free(eigenValues);
     freeMat(N, &eigenVectors);
     freeMat(N, &U);
+
+    /* Build output */
+    T_Matrix_obj = Create_PyObj_Mat_From_C(N, K, &T);
+    
+    /* free T */
     freeMat(N, &T);
 
     return Py_BuildValue("O", T_Matrix_obj);
@@ -233,6 +261,8 @@ static PyObject* spk_fit(PyObject *self, PyObject *args){
 static PyObject* wam_fit(PyObject *self, PyObject *args){
     int N, dimension, success;
     double **vectorsList = NULL, **wamMat = NULL;
+    double ***retInitMat = NULL; /* The return pointer to matrix which back after call to initMat */
+
     PyObject *vec_list_obj;     /* input */
     PyObject *wamMatrix_obj;    /* output */
 
@@ -241,16 +271,18 @@ static PyObject* wam_fit(PyObject *self, PyObject *args){
         return Py_BuildValue("");
     }
 
-    vectorsList = *(Create_C_Mat_From_PyObj(N, dimension, vec_list_obj));
-    if (vectorsList == NULL){
+    retInitMat = Create_C_Mat_From_PyObj(N, dimension, vec_list_obj);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    vectorsList = *retInitMat;
 
     /* Body */
-    wamMat = *(initMat(N));
-    if (wamMat == NULL){
+    retInitMat = initMat(N);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    wamMat = *retInitMat;
 
     success = wam_func(&vectorsList, N, dimension, &wamMat);
     if(success == 1){
@@ -322,6 +354,8 @@ static PyObject* ddg_fit_B(PyObject *self, PyObject *args){ /* Option B */
 static PyObject* ddg_fit(PyObject *self, PyObject *args){ /* Option A */
     int N, dimension, success;
     double **vectorsList = NULL, **ddgMat = NULL, **wamMat = NULL;
+    double ***retInitMat = NULL; /* The return pointer to matrix which back after call to initMat */
+
     PyObject *vec_list_obj;     /* input */
     PyObject *ddgMat_obj;    /* output */
 
@@ -330,25 +364,28 @@ static PyObject* ddg_fit(PyObject *self, PyObject *args){ /* Option A */
         return Py_BuildValue("");
     }
     
-    vectorsList = *(Create_C_Mat_From_PyObj(N, dimension, vec_list_obj));
-    if (vectorsList == NULL){
+    retInitMat = Create_C_Mat_From_PyObj(N, dimension, vec_list_obj);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    vectorsList = *retInitMat;
 
     /* Body */
-    wamMat = *(initMat(N));
-    if (wamMat == NULL){
+    retInitMat = initMat(N);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    wamMat = *retInitMat;
     success = wam_func(&vectorsList, N, dimension, &wamMat);
     if(success == 1){
         return Py_BuildValue("");
     }
 
-    ddgMat = *(initMat(N));
-    if (ddgMat == NULL){
+    retInitMat = initMat(N);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    ddgMat = *retInitMat;
     success = ddg_func(N, &wamMat, &ddgMat);
     if(success == 1){
         return Py_BuildValue("");
@@ -428,6 +465,8 @@ static PyObject* lnorm_fit(PyObject *self, PyObject *args){ /* Option A */
     int N, dimension, success;
     double **vectorsList = NULL, **ddgMat = NULL, **wamMat = NULL;
     double **lnormMat = NULL;
+    double ***retInitMat = NULL; /* The return pointer to matrix which back after call to initMat */
+
     PyObject *vec_list_obj;     /* input */
     PyObject *lnormMat_obj;    /* output */
 
@@ -436,34 +475,38 @@ static PyObject* lnorm_fit(PyObject *self, PyObject *args){ /* Option A */
         return Py_BuildValue("");
     }
     
-    vectorsList = *(Create_C_Mat_From_PyObj(N, dimension, vec_list_obj));
-    if (vectorsList == NULL){
+    retInitMat = Create_C_Mat_From_PyObj(N, dimension, vec_list_obj);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    vectorsList = *retInitMat;
 
     /* Body */
-    wamMat = *(initMat(N));
-    if (wamMat == NULL){
+    retInitMat = initMat(N);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    wamMat = *retInitMat;
     success = wam_func(&vectorsList, N, dimension, &wamMat);
     if(success == 1){
         return Py_BuildValue("");
     }
 
-    ddgMat = *(initMat(N));
-    if (ddgMat == NULL){
+    retInitMat = initMat(N);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    ddgMat = *retInitMat;
     success = ddg_func(N, &wamMat, &ddgMat);
     if(success == 1){
         return Py_BuildValue("");
     }
 
-    lnormMat = *(initMat(N));
-    if (lnormMat == NULL){
+    retInitMat = initMat(N);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    lnormMat = *retInitMat;
     success = lNorm_func(N, &wamMat, &ddgMat, &lnormMat);
     if(success == 1){
         return Py_BuildValue("");
@@ -503,6 +546,8 @@ static PyObject* jacobi_fit(PyObject *self, PyObject *args){
     double **symMat = NULL;
     double **eigenVectors = NULL;
     double *eigenValues = NULL;
+    double ***retInitMat = NULL; /* The return pointer to matrix which back after call to initMat */
+
     PyObject *symMat_obj;     /* input */
     PyObject *eigenVecors_obj, *eigenValues_obj;    /* output */
 
@@ -511,20 +556,22 @@ static PyObject* jacobi_fit(PyObject *self, PyObject *args){
         return Py_BuildValue("");
     }
 
-    symMat = *(Create_C_Mat_From_PyObj(N, N, symMat_obj));
-    if (symMat == NULL){
+    retInitMat = Create_C_Mat_From_PyObj(N, N, symMat_obj);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    symMat = *retInitMat;
 
     /* Body */
     eigenValues = (double*)malloc(N * sizeof(double));
     if (eigenValues == NULL){
         return Py_BuildValue("");
     }
-    eigenVectors = *(initMat(N));
-    if (eigenVectors == NULL){
+    retInitMat = initMat(N);
+    if (retInitMat == NULL){
         return Py_BuildValue("");
     }
+    eigenVectors = *retInitMat;
 
     success = jacobi_func(N, &symMat, &eigenVectors, &eigenValues);
     if(success == 1){
@@ -663,6 +710,73 @@ PyObject* Create_PyObj_Arr_From_C(int numOfElements, double** c_arr){
     }
 
     return outArr_obj;
+}
+
+int sortEigenValuesAndEigenVectors(int N, double **eigenValues, double ***eigenVectors){
+    int i;
+    double temp;
+    int flag = 1;
+
+    while (flag)
+    {
+        flag = 0;
+
+        for (i = 0; i < N-1; i++){
+            if ((*eigenValues)[i] < (*eigenValues)[i+1]){
+                /* Switch operation */
+                flag = 1;
+                
+                temp = (*eigenValues)[i];
+                (*eigenValues)[i] = (*eigenValues)[i+1];
+                (*eigenValues)[i+1] = temp;
+
+                SwitchColumnsOfMat(N, i, i+1, eigenVectors);
+            }
+        }
+    }
+    return 0;
+}
+
+void SwitchColumnsOfMat(int numOfRows, int i, int j, double ***mat){
+    double temp;
+    int m;
+
+    for (m = 0; m < numOfRows; m++){
+        temp = (*mat)[m][i];
+        (*mat)[m][i] = (*mat)[m][j];
+        (*mat)[m][j] = temp;
+    }
+}
+
+int Fill_K_LargestEigenVectors(int N, int K, double ***eigenVectors, double ***U){
+    int i, j;
+
+    for (i = 0; i < N; i++){
+        for (j = 0; j < K; j++){
+            (*U)[i][j] = (*eigenVectors)[i][j];
+        }
+    }
+
+    return 0;
+}
+
+int ReNormalizedRows(int N, int K, double ***U, double ***T){
+    int i, j;
+    double rowSum = 0;
+
+    for (i = 0; i < N; i++){
+        rowSum = 0;
+        for (j = 0; j < K; j++){
+            rowSum += pow((*U)[i][j], 2.0);
+        } 
+        rowSum = pow(rowSum, 0.5);
+
+        for (j = 0; j < K; j++){
+            (*T)[i][j] = (*U)[i][j] / rowSum;
+        }
+    }
+
+    return 0;
 }
 
 /* Setup Area */

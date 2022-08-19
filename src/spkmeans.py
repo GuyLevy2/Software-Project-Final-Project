@@ -19,12 +19,12 @@ def main():
         goal = processedArgs[5]
 
         if goal == "spk":
-            # The matrix T is after stage 5 of the spk algorithem
+            # The matrix T is the output after stages (1)-(5) of the spk algorithem
             T = mksp.spk_fit(N, dimension, fileContent)
             if T == None:
                 raise Exception
             K = np.asarray(T).shape[1] # The final K in the number of columns of the matrix T
-            # (6) Treating each row of T as a point in Rk, cluster them into k clusters via the K-means algorithm
+            # stage (6): Treating each row of T as a point in RxK, cluster them into k clusters via the K-means algorithm
             returnValue_K_meansPP = k_meansPP(T, N, K, K)            
             # Error handling
             if returnValue_K_meansPP == None:
@@ -155,15 +155,6 @@ def main():
         return 
     
     return 
-
-def largest_K_eigenvectors(K, eigenVectors, eigenValues):
-    #missing implimatation
-    eigenVectors = np.asarray(eigenVectors)
-    eigenValues = np.asarray(eigenValues)
-    eigenV_t = eigenVectors.transpose()
-    dic = dict(zip(eigenValues, eigenV_t))
-
-    return U
 
 def printFloatMatrix_format(numOfRows, matrix):
     """ 
