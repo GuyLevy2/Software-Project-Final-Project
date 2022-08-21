@@ -6,52 +6,12 @@
 #include <math.h>
 #include <ctype.h>
 
+double*** Create_C_Mat_From_PyObj(int, int, PyObject*);
+PyObject* Create_PyObj_Mat_From_C(int, int, double***);
+double*** Create_C_Arr_From_PyObj(int, PyObject*);
+PyObject* Create_PyObj_Arr_From_C(int, double**);
+
 /* API functions */
-
-/* 
- * Function: eigengapHeuristic_fit
- * -------------------------------
- * API function for Eigengap Heuristic Algorithem
- * 
- * Input: PyObject arguments:
- * (1) The number of eigen-values (int)
- * (2) A list of eigen-values (as float)
- * 
- * Output: the number k of the eigengap heuristic
- * returns: PyObject of the number k (int)
- */
-static PyObject* eigengapHeuristic_fit(PyObject *self, PyObject *args){
-    int N, k, i;
-    double *eigenValues = NULL;
-    PyObject *eigenValues_obj;
-    
-    /* Input */
-    if(!PyArg_ParseTuple(args, "iO", &N, &eigenValues_obj)) {
-        return Py_BuildValue("");
-    }
-
-    eigenValues = (double*)malloc(N * sizeof(double));
-    if(eigenValues == NULL){
-        return Py_BuildValue("");
-    }
-    
-    for (i = 0; i < N; i++){
-        eigenValues[i] = PyFloat_AsDouble(PyList_GetItem(eigenValues_obj, i));
-    }
-
-    /* Body */
-    k = eigenGap(N, &eigenValues);
-
-    /* Free eigenValues */
-    free(eigenValues);
-
-    /* Output */
-    if(k == -1){
-        return Py_BuildValue("");
-    }
-
-    return Py_BuildValue("i", k);
-}
 
 /* 
  * Function: kmeans_fit
@@ -607,23 +567,16 @@ static PyObject* jacobi_fit(PyObject *self, PyObject *args){
  * returns: a pointer to the new aloocated matrix (NULL in case of error)
  */
 double*** Create_C_Mat_From_PyObj(int numOfRows, int numOfCols, PyObject* py_mat){
-    double **mat = NULL;
+    double **mat = NULL, ***retMat = NULL;
     double *row = NULL;
     PyObject *row_obj, *value;
     
-    mat = (double**)malloc(numOfRows * sizeof(double*));
-    if (mat == NULL){
+    retMat = initMatMN(numOfRows, numOfCols);
+    if (retMat == NULL){
         return NULL;
     }
-
-    for (i = 0; i < numOfRows; i++){
-        row = (double*)malloc(numOfCols * sizeof(double));
-        if (row == NULL){
-            return NULL;
-        }
-        mat[i] = row;   
-    }
-
+    mat = *retMat;
+    
     for (i = 0; i < numOfRows; i++) {
         row_obj = PyList_GetItem(py_mat, i);
         for (j = 0; j < numOfCols; j++){
@@ -712,79 +665,13 @@ PyObject* Create_PyObj_Arr_From_C(int numOfElements, double** c_arr){
     return outArr_obj;
 }
 
-int sortEigenValuesAndEigenVectors(int N, double **eigenValues, double ***eigenVectors){
-    int i;
-    double temp;
-    int flag = 1;
-
-    while (flag)
-    {
-        flag = 0;
-        for (i = 0; i < N-1; i++){
-            if ((*eigenValues)[i] < (*eigenValues)[i+1]){
-                /* Switch operation */
-                flag = 1;
-                
-                temp = (*eigenValues)[i];
-                (*eigenValues)[i] = (*eigenValues)[i+1];
-                (*eigenValues)[i+1] = temp;
-
-                SwitchColumnsOfMat(N, i, i+1, eigenVectors);
-            }
-        }
-    }
-    return 0;
-}
-
-void SwitchColumnsOfMat(int numOfRows, int i, int j, double ***mat){
-    double temp;
-    int m;
-
-    for (m = 0; m < numOfRows; m++){
-        temp = (*mat)[m][i];
-        (*mat)[m][i] = (*mat)[m][j];
-        (*mat)[m][j] = temp;
-    }
-}
-
-int Fill_K_LargestEigenVectors(int N, int K, double ***eigenVectors, double ***U){
-    int i, j;
-
-    for (i = 0; i < N; i++){
-        for (j = 0; j < K; j++){
-            (*U)[i][j] = (*eigenVectors)[i][j];
-        }
-    }
-
-    return 0;
-}
-
-int ReNormalizedRows(int N, int K, double ***U, double ***T){
-    int i, j;
-    double rowSum = 0;
-
-    for (i = 0; i < N; i++){
-        rowSum = 0;
-        for (j = 0; j < K; j++){
-            rowSum += pow((*U)[i][j], 2.0);
-        } 
-        rowSum = pow(rowSum, 0.5);
-
-        for (j = 0; j < K; j++){
-            (*T)[i][j] = (*U)[i][j] / rowSum;
-        }
-    }
-
-    return 0;
-}
-
 /* Setup Area */
 
 static PyMethodDef capiMethods[] = {
-    {"eigengapHeuristic_fit",
-    (PyCFunction) eigengapHeuristic_fit,
+    {"spk_fit",
+    (PyCFunction) spk_fit,
     METH_VARARGS,
-    PyDoc_STR("Eigengap Heuristic Algorithem")},
+    PyDoc_STR("spk Algorithem")},
     {"kmeans_fit",
     (PyCFunction) kmeans_fit,
     METH_VARARGS,

@@ -2,6 +2,47 @@
 #include <stdlib.h>
 #include <math.h>
 
+int wam_func(double***, int, int, double***);
+int ddg_func(int, double***, double***);
+int lNorm_func(int, double***, double***, double***);
+int jacobi_func(int, double***, double***, double**);
+int kmeans_c(int, int, int, int, double, double**, double***);
+
+double*** initMat(int);
+double*** initMatMN(int, int);
+int freeMat(int, double***);
+
+int eigenGap(int, double**);
+int sortEigenValuesAndEigenVectors(int, double**, double***);
+void SwitchColumnsOfMat(int, int, int, double***);
+int Fill_K_LargestEigenVectors(int, int, double***, double***);
+int ReNormalizedRows(int, int, double***, double***);
+
+/* Granular Utility Functions */
+int eigenComp(const void*, const void*);
+double vectorDist(double*, double*, int);
+int minusSqrtD(int, double***);
+int identityMat(int, double***);
+int buildRotMat(int, double***, int, int, int*, int*, double***);
+int find_ij_pivot(int, double***, int*, int*);
+int matMult(int, double***, double***, double***);
+int matDup(int, double***, double***);
+int matTranspose(int, double***, double***);
+int computeA_tag(int, int, int, double***, double, double, double***);
+int convergenceTest(int, double, double***, double***);
+double offCalc(int, double***);
+void printMat(int, int, double***);
+
+/* Functions Imported From Previous Excercises */
+int validateAndProcessInput(int, char**, int*, int*, char**, double***, char**);
+int isValidInteger(char*);
+double calcDistSqrt(double*, double*, int);
+int assignVectorToClosestCluster(double*, double****, double**, int**, int, int);
+void resetClusters(int**, int);
+double updateCentroids(int, int, double***, double***, int*);
+int freeMemory(double***, double****, int**, int, int);
+
+
 int main(int argc, char *argv[]) {
     int dimension, line_count;
     char* inputFile;
@@ -282,8 +323,8 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors,
     return 0;
 }
 
-int kmeans_c(int k, int dimension, int line_count, int maxIter, double EPSILON, double** vectorsList, double*** centroidsList)
-{
+int kmeans_c(int k, int dimension, int line_count, int maxIter, double EPSILON,
+                                    double** vectorsList, double*** centroidsList){
     double*** clusterList;
     double** cluster;
     double *vec, *centroid_i;
@@ -854,6 +895,73 @@ void printMat(int m, int n, double*** mat){
         printf("%.4f", mat[i][n-1]);
         printf("\n");
     }
+}
+
+/* Functions for spk proccedure */
+int sortEigenValuesAndEigenVectors(int N, double **eigenValues, double ***eigenVectors){
+    int i;
+    double temp;
+    int flag = 1;
+
+    while (flag)
+    {
+        flag = 0;
+        for (i = 0; i < N-1; i++){
+            if ((*eigenValues)[i] < (*eigenValues)[i+1]){
+                /* Switch operation */
+                flag = 1;
+                
+                temp = (*eigenValues)[i];
+                (*eigenValues)[i] = (*eigenValues)[i+1];
+                (*eigenValues)[i+1] = temp;
+
+                SwitchColumnsOfMat(N, i, i+1, eigenVectors);
+            }
+        }
+    }
+    return 0;
+}
+
+void SwitchColumnsOfMat(int numOfRows, int i, int j, double ***mat){
+    double temp;
+    int m;
+
+    for (m = 0; m < numOfRows; m++){
+        temp = (*mat)[m][i];
+        (*mat)[m][i] = (*mat)[m][j];
+        (*mat)[m][j] = temp;
+    }
+}
+
+int Fill_K_LargestEigenVectors(int N, int K, double ***eigenVectors, double ***U){
+    int i, j;
+
+    for (i = 0; i < N; i++){
+        for (j = 0; j < K; j++){
+            (*U)[i][j] = (*eigenVectors)[i][j];
+        }
+    }
+
+    return 0;
+}
+
+int ReNormalizedRows(int N, int K, double ***U, double ***T){
+    int i, j;
+    double rowSum = 0;
+
+    for (i = 0; i < N; i++){
+        rowSum = 0;
+        for (j = 0; j < K; j++){
+            rowSum += pow((*U)[i][j], 2.0);
+        } 
+        rowSum = pow(rowSum, 0.5);
+
+        for (j = 0; j < K; j++){
+            (*T)[i][j] = (*U)[i][j] / rowSum;
+        }
+    }
+
+    return 0;
 }
 
 

@@ -3,9 +3,9 @@ from setuptools import setup, find_packages, Extension
 setup(
     name='mykmeanssp',
     version='0.1.0',
-    author="Example Author",
+    author="Liad and Guy",
     author_email="sample@example.com",
-    description="A sample C-API",
+    description="C-API Extansion",
     install_requires=['invoke'],
     packages=find_packages(),
 
@@ -17,7 +17,7 @@ setup(
     ext_modules=[
         Extension(
             'mykmeanssp',
-            ['skpkmeans.c'],
+            ['spkmeansmodule.c'],
         ),
     ]
 )
