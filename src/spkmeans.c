@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
  * vectors_list: the list of all N vectors
  * N: the number of vectors
  * dim: the dimension of the vectors
- * outputWamMat: a pointer to the output matrix
+ * outputWamMat: a pointer to the output matrix WAM
  * 
  * returns: 0
  */
@@ -101,12 +101,10 @@ int wam_func(double*** vectors_list, int N, int dim, double*** outputWamMat){
     double dist;
     
     for (i = 0; i < N; i++){
-        for (j = 0; j < N; j++){
-            
+        for (j = 0; j < N; j++){ 
             if (i == j){
                 (*outputWamMat)[i][j] = 0;
             }
-            
             else{
                 vec1 = (*vectors_list)[i];
                 vec2 = (*vectors_list)[j];
@@ -125,20 +123,20 @@ int wam_func(double*** vectors_list, int N, int dim, double*** outputWamMat){
  * calculates the Diagonal Degree matrix
  * 
  * N: the number of vectors
- * wamMat: a pointer to the WAM
+ * wamMat: a pointer to the Weighted Adjacency matrix
  * outputDdgMat: a pointer to the ddg output matrix (initialized with zeros)
  * 
  * returns: 0
  */
 int ddg_func(int N, double*** wamMat, double*** outputDdgMat){
-    int i, j;
+    int i, z;
     double sum;
 
     for (i = 0; i < N; i++){
         sum = 0;
 
-        for (j = 0; j < N; j++){
-            sum += (*wamMat)[i][j];
+        for (z = 0; z < N; z++){
+            sum += (*wamMat)[i][z];
         }
         
         (*outputDdgMat)[i][i] = sum;
@@ -153,15 +151,15 @@ int ddg_func(int N, double*** wamMat, double*** outputDdgMat){
  * calculates the Normalized Graph Laplacian matrix
  * 
  * N: the number of vectors
- * wamMat: a pointer to the WAM
- * ddgMat: a pointer to the ddg matrix
+ * wamMat: a pointer to the Weighted Adjacency matrix
+ * ddgMat: a pointer to the Diagonal Degree matrix
  * lNormMat: a pointer to the output lNorm matrix
  * 
  * returns: 0
  */
 int lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** outputLNormMat){
     int i, j;
-    double ***minusSqrtMat, ***tmpMat;
+    double ***minusSqrtMat = NULL, ***tmpMat = NULL;
 
     /* creating the D^-0.5 matrix */
     minusSqrtMat = initMat(N);
@@ -174,6 +172,7 @@ int lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** outputLNormM
     /* calculating (D^-0.5*W*D^-0.5) */
     tmpMat = initMat(N);
     if (tmpMat == NULL){
+        freeMat(N, minusSqrtMat);
         return 1;
     }
     matMult(N, minusSqrtMat, wamMat, tmpMat);
@@ -190,7 +189,7 @@ int lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** outputLNormM
                 (*outputLNormMat)[i][j] = 1 - (*outputLNormMat)[i][j];
             }
             else{
-                (*outputLNormMat)[i][j] = - (*outputLNormMat)[i][j];
+                (*outputLNormMat)[i][j] = 0 - (*outputLNormMat)[i][j];
             }
         }
     }
@@ -214,14 +213,14 @@ int lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** outputLNormM
  * 
  * returns: 0 if there is no exception and 1 otherwise
  */
-int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenValues){
+int jacobi_func(int N, double*** symMat, double*** eigenVectors, 
+                                                double** eigenValues){
     int MAX_ROTATIONS = 100;
     int i = 0, j = 0, countRot = 0, k;
     double c = 0, s = 0;
     double EPSILON = 0.00001;
     double ***P = NULL, ***A = NULL, ***A_tag = NULL, ***tempMat = NULL;
 
-    /* TODO free memory in case of error */
     /* initializing utility matrices */
     A = initMat(N);
     if (A == NULL){
@@ -230,32 +229,37 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenV
     
     A_tag = initMat(N);
     if (A_tag == NULL){
+        freeMat(N, A);
         return 1;
     }
     
     tempMat = initMat(N);
     if (tempMat == NULL){
+        freeMat(N, A);
+        freeMat(N, A_tag);
         return 1;
     }
 
     P = initMat(N);
     if (P == NULL){
+        freeMat(N, A);
+        freeMat(N, A_tag);
+        freeMat(N, P);
         return 1;
     }
 
-    identityMat(N, eigenVectors);  /* eigenVectors = I(N) */
-
-    matDup(N, symMat, A_tag);   /* A' = symMat (by values) */
+    identityMat(N, eigenVectors);   /* eigenVectors = I(N)      */
+    matDup(N, symMat, A_tag);       /* A' = symMat (by values)  */
 
     do{
-        matDup(N, A_tag, A);    /* A = A' (by values)    */
+        matDup(N, A_tag, A);        /* A = A' (by values)       */
          
         if (find_ij_pivot(N, A, &i, &j)){ /* if A is a diagonal matrix */    
             break; 
         }
 
         identityMat(N, P);                      /* P = I(N)                                             */
-        buildRotMat(N, A, i, j, &c, &s, P);     /* P is rotate matrix wrt A and c and s are updeted     */
+        buildRotMat(N, A, i, j, &c, &s, P);     /* P is rotate matrix wrt A. Also c and s are updeted   */
         matMult(N, eigenVectors, P, tempMat);   /* tempMat = eigenVectors * P                           */
         matDup(N, tempMat, eigenVectors);       /* eigenVectors = tempMat                               */
         computeA_tag(N, i, j, A, c, s, A_tag);  /* A' = P^T*A*P                                         */
@@ -270,10 +274,10 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors, double** eigenV
     }
     
     /* Free all matrixes which allocated during this function */
-    freeMat(N, P);
     freeMat(N, A);
     freeMat(N, A_tag);
     freeMat(N, tempMat);
+    freeMat(N, P);
     
     return 0;
 }
@@ -420,11 +424,12 @@ double vectorDist(double* v1, double* v2, int dim){
     double dist = 0;
     int i = 0;
     
-    for(i = 0; i < dim; ++i){
-        dist += pow(v1[i]-v2[i], 2.0);
+    for(i = 0; i < dim; i++){
+        dist += pow(v1[i] - v2[i], 2.0);
     }
 
-    return pow(dist, 0.5);
+    dist = pow(dist, 0.5);
+    return dist;
 }
 
 /* 
@@ -453,9 +458,9 @@ int minusSqrtD(int N, double*** D){
  * sets a given matrix to be an identity matrix
  * 
  * N: the dimention of the given matrix mat (NxN)
- * mat: a pointer to the output identity matrix
+ * mat: a pointer to the given and output matrix with some values
  * 
- * returns: 0 if there is no exception and 1 otherwise
+ * returns: 0
  */
 int identityMat(int N, double*** mat){
     int i, j;
@@ -502,7 +507,6 @@ int buildRotMat(int N, double*** A, int i, int j, int* c_p, int* s_p, double*** 
     (*P)[i][j] = s;
     (*P)[j][j] = c;
     (*P)[j][i] = -1.0*s;
-    /* TODO: which is i and j in the matrix P??? */
 
     return 0;
 }
@@ -598,7 +602,7 @@ int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
  * origMat: a pointer to the given matrix
  * newMat: a pointer to the output dulicated matrix
  * 
- * returns: 0 if there is no exception and 1 otherwise
+ * returns: 0
  */
 int matDup(int N, double*** origMat, double*** newMat){
     int i,j;
@@ -608,6 +612,7 @@ int matDup(int N, double*** origMat, double*** newMat){
             (*newMat)[i][j] = (*origMat)[i][j];
         }
     }
+    
     return 0;
 }
 
@@ -656,7 +661,7 @@ int matTranspose(int N, double*** mat, double*** matT){
  * c,s: the rotation elements of the rotation matrix P
  * A_tag: a pointer to the output A' matrix
  * 
- * returns: 0 if there is no exception and 1 otherwise
+ * returns: 0
  */
 int computeA_tag(int N, int i, int j, double*** A, double c, double s, double*** A_tag){
     int r;
