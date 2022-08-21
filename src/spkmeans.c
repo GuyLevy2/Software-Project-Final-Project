@@ -9,8 +9,8 @@ int lNorm_func(int, double***, double***, double***);
 int jacobi_func(int, double***, double***, double**);
 int kmeans_c(int, int, int, int, double, double**, double***);
 
-double*** initMat(int);
-double*** initMatMN(int, int);
+double** initMat(int);
+double** initMatMN(int, int);
 void freeMat(int, double***);
 
 int eigenGap(int, double**);
@@ -43,18 +43,15 @@ void resetClusters(int**, int);
 double updateCentroids(int, int, double***, double***, int*);
 int freeMemory(double***, double****, int**, int, int);
 
-
 int main(int argc, char *argv[]) {
-    int dimension, line_count;
+    int dimension, line_count, i;
     char* inputFile;
     double** vectorsList;
     /*double EPSILON = 0.001;*/
     int inputError;
     char* goal;
-    double*** wamMat;
-    double*** ddgMat;
-    double*** LNormMat;
-
+    double **wamMat, **ddgMat, **LNormMat, **eigenVectors;
+    double *eigenValues;
 
     inputError = validateAndProcessInput(argc, argv, &dimension, &line_count, &inputFile, &vectorsList, &goal);
     
@@ -63,60 +60,83 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
-    
+    /* TODO - need to complete jacobi part and output */
+    /* in case goal == jacobi:
+     computes eigenvectors and eigenvalues     
+     free memory and abort.
+     else - continue with the next goals */
+    if (strcmp(goal, "jacobi") == 0){
+        eigenVectors = initMat(line_count); /* NULL CHECK? */
+        eigenValues = (double*)malloc(line_count * sizeof(double)); /* NULL CHECK? */
+
+        jacobi_func(line_count, &vectorsList, &eigenVectors, &eigenValues);
+
+        for (i = 0; i < line_count - 1; i++){
+            printf("%.4f", eigenValues[i]);
+            printf(",");
+        }
+        printf("%.4f", eigenValues[line_count - 1]);
+        printf("\n");
+        printMat(line_count, line_count, &eigenVectors);
+        
+        free(eigenValues);
+        freeMat(line_count, &eigenVectors);
+        freeMat(line_count, &vectorsList);
+
+        return 0;
+    }
+
     /* beginning of algorithm */
     wamMat = initMat(line_count);   /* NULL check? */
-    wam_func(&vectorsList, line_count, dimension, wamMat);
+    wam_func(&vectorsList, line_count, dimension, &wamMat); /* success check? */
     
     /* in case goal == wam:
      print the wam matrix:
      free memory and abort.
      else - continue with the next goal */
     if (strcmp(goal, "wam") == 0){
-        printMat(line_count, line_count, wamMat);
+        printMat(line_count, line_count, &wamMat);
         
-        freeMat(line_count, wamMat);
+        freeMat(line_count, &wamMat);
         freeMat(line_count, &vectorsList);
 
         return 0;
     }
 
     ddgMat = initMat(line_count);
-    ddg_func(line_count, wamMat, ddgMat);
+    ddg_func(line_count, &wamMat, &ddgMat);
 
     /* in case goal == ddg:
      print the ddg matrix:
      free memory and abort.
      else - continue with the next goal */
     if (strcmp(goal, "ddg") == 0){
-        printMat(line_count, line_count, ddgMat);
+        printMat(line_count, line_count, &ddgMat);
 
-        freeMat(line_count, wamMat);
-        freeMat(line_count, ddgMat);
+        freeMat(line_count, &wamMat);
+        freeMat(line_count, &ddgMat);
         freeMat(line_count, &vectorsList);
 
         return 0;
     }
 
     LNormMat = initMat(line_count);
-    lNorm_func(line_count, wamMat, ddgMat, LNormMat);
+    lNorm_func(line_count, &wamMat, &ddgMat, &LNormMat);
 
     /* in case goal == lnorm:
      print the lnorm matrix:
      free memory and abort.
      else - continue with the next goal */
     if (strcmp(goal, "lnorm") == 0){
-        printMat(line_count, line_count, LNormMat);
+        printMat(line_count, line_count, &LNormMat);
         
-        freeMat(line_count, wamMat);
-        freeMat(line_count, ddgMat);
-        freeMat(line_count, LNormMat);
+        freeMat(line_count, &wamMat);
+        freeMat(line_count, &ddgMat);
+        freeMat(line_count, &LNormMat);
         freeMat(line_count, &vectorsList);
 
         return 0;
     }
-
-    /* TODO - need to complete jacobi part and output */
 
     /* TODO - remember to free */
     return 0;
@@ -201,28 +221,29 @@ int ddg_func(int N, double*** wamMat, double*** outputDdgMat){
  */
 int lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** outputLNormMat){
     int i, j;
-    double ***minusSqrtMat = NULL, ***tmpMat = NULL;
+    double **minusSqrtMat = NULL, **tmpMat = NULL;
 
     /* creating the D^-0.5 matrix */
     minusSqrtMat = initMat(N);
     if (minusSqrtMat == NULL){
         return 1;
     }
-    matDup(N, ddgMat, minusSqrtMat);
-    minusSqrtD(N, minusSqrtMat);
+    matDup(N, ddgMat, &minusSqrtMat);
+    minusSqrtD(N, &minusSqrtMat);
     
     /* calculating (D^-0.5*W*D^-0.5) */
     tmpMat = initMat(N);
     if (tmpMat == NULL){
-        freeMat(N, minusSqrtMat);
+        freeMat(N, &minusSqrtMat);
         return 1;
     }
-    matMult(N, minusSqrtMat, wamMat, tmpMat);
-    matMult(N, tmpMat, minusSqrtMat, outputLNormMat);
-    
+
+    matMult(N, &minusSqrtMat, wamMat, &tmpMat);
+    matMult(N, &tmpMat, &minusSqrtMat, outputLNormMat);
+
     /* freeing utility matrices */
-    freeMat(N, tmpMat);
-    freeMat(N, minusSqrtMat);
+    freeMat(N, &tmpMat);
+    freeMat(N, &minusSqrtMat);
 
     /* subtraction from identity matrix */
     for (i = 0; i < N; i++){
@@ -261,7 +282,7 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors,
     int i = 0, j = 0, countRot = 0, k;
     double c = 0, s = 0;
     double EPSILON = 0.00001;
-    double ***P = NULL, ***A = NULL, ***A_tag = NULL, ***tempMat = NULL;
+    double **P = NULL, **A = NULL, **A_tag = NULL, **tempMat = NULL;
 
     /* initializing utility matrices */
     A = initMat(N);
@@ -271,55 +292,55 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors,
     
     A_tag = initMat(N);
     if (A_tag == NULL){
-        freeMat(N, A);
+        freeMat(N, &A);
         return 1;
     }
     
     tempMat = initMat(N);
     if (tempMat == NULL){
-        freeMat(N, A);
-        freeMat(N, A_tag);
+        freeMat(N, &A);
+        freeMat(N, &A_tag);
         return 1;
     }
 
     P = initMat(N);
     if (P == NULL){
-        freeMat(N, A);
-        freeMat(N, A_tag);
-        freeMat(N, P);
+        freeMat(N, &A);
+        freeMat(N, &A_tag);
+        freeMat(N, &P);
         return 1;
     }
 
     identityMat(N, eigenVectors);   /* eigenVectors = I(N)      */
-    matDup(N, symMat, A_tag);       /* A' = symMat (by values)  */
+    matDup(N, symMat, &A_tag);       /* A' = symMat (by values)  */
 
     do{
-        matDup(N, A_tag, A);        /* A = A' (by values)       */
+        matDup(N, &A_tag, &A);        /* A = A' (by values)       */
          
-        if (find_ij_pivot(N, A, &i, &j)){ /* if A is a diagonal matrix */    
+        if (find_ij_pivot(N, &A, &i, &j)){ /* if A is a diagonal matrix */    
             break; 
         }
 
-        identityMat(N, P);                      /* P = I(N)                                             */
-        buildRotMat(A, i, j, &c, &s, P);     /* P is rotate matrix wrt A. Also c and s are updeted   */
-        matMult(N, eigenVectors, P, tempMat);   /* tempMat = eigenVectors * P                           */
-        matDup(N, tempMat, eigenVectors);       /* eigenVectors = tempMat                               */
-        computeA_tag(N, i, j, A, c, s, A_tag);  /* A' = P^T*A*P                                         */
+        identityMat(N, &P);                      /* P = I(N)                                             */
+        buildRotMat(&A, i, j, &c, &s, &P);     /* P is rotate matrix wrt A. Also c and s are updeted   */
+        matMult(N, eigenVectors, &P, &tempMat);   /* tempMat = eigenVectors * P                           */
+        matDup(N, &tempMat, eigenVectors);       /* eigenVectors = tempMat                               */
+        computeA_tag(N, i, j, &A, c, s, &A_tag);  /* A' = P^T*A*P                                         */
 
         countRot++;
-    } while ((!convergenceTest(N, EPSILON, A, A_tag)) 
+    } while ((!convergenceTest(N, EPSILON, &A, &A_tag)) 
                 && (countRot < MAX_ROTATIONS));
 
     /* Extract the eigenValues from the diagonal of A' */
     for(k = 0; k < N; k++){
-        (*eigenValues)[k] = (*A_tag)[k][k];
+        (*eigenValues)[k] = (A_tag)[k][k];
     }
     
     /* Free all matrixes which allocated during this function */
-    freeMat(N, A);
-    freeMat(N, A_tag);
-    freeMat(N, tempMat);
-    freeMat(N, P);
+    freeMat(N, &A);
+    freeMat(N, &A_tag);
+    freeMat(N, &tempMat);
+    freeMat(N, &P);
     
     return 0;
 }
@@ -606,7 +627,7 @@ int find_ij_pivot(int N, double*** A, int* i_p, int* j_p){
  */
 int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
     int i,j,k;
-    double*** mat2_T = NULL;
+    double** mat2_T = NULL;
     double m_ij;
 
     mat2_T = initMat(N);
@@ -614,13 +635,13 @@ int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
         return 1;
     }
 
-    matTranspose(N, mat2, mat2_T);
+    matTranspose(N, mat2, &mat2_T);
 
     for(i = 0; i < N; i++){
         for(j = 0; j < N; j++){
             m_ij = 0;
             for(k = 0; k < N; k++){
-                m_ij += ((*mat1)[i][k]) * ((*mat2_T)[j][k]);
+                m_ij += ((*mat1)[i][k]) * ((mat2_T)[j][k]);
                 /* multipling using mat2 transposed, mat2_T for decreasing
                  the cash misses */  
             }
@@ -628,9 +649,9 @@ int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
         }
     }
 
-    freeMat(N, mat2_T);
+    freeMat(N, &mat2_T);
 
-    return 0; /* Guy - I think there is no need for transpose and it complicates the function */
+    return 0; /* Guy - I think there is no need for transpose and it complicates the function.. Liad - I agree (21/8) */
 }
 
 /* 
@@ -672,7 +693,7 @@ int matTranspose(int N, double*** mat, double*** matT){
 
     for(i = 0; i < N; i++){
         for(j = 0; j < N; j++){
-            matT[j][i] = mat[i][j];
+            (*matT)[j][i] = (*mat)[i][j];
         }
     }
 
@@ -787,9 +808,9 @@ double offCalc(int N, double*** mat){
  *  
  * N: the dimention of the given matrix (NxN)
  * 
- * returns: a pointer to the new initializes matrix or NULL if an error has occurred
+ * returns: a new initializes matrix or NULL if an error has occurred
  */
-double*** initMat(int N){
+double** initMat(int N){
     int i, j;
     double *vec = NULL;
     double **newMat = NULL;
@@ -812,7 +833,7 @@ double*** initMat(int N){
         newMat[i] = vec;
     }
 
-    return &newMat;
+    return newMat;
 }
 
 /* 
@@ -823,9 +844,9 @@ double*** initMat(int N){
  * N: the dimention of the given matrix (MxN)
  * M: the dimention of the given matrix (MxN)
  * 
- * returns: a pointer to the new initializes matrix or NULL if an error has occurred
+ * returns: a new initializes matrix or NULL if an error has occurred
  */
-double*** initMatMN(int M, int N){
+double** initMatMN(int M, int N){
     int i, j;
     double *vec = NULL;
     double **newMat = NULL;
@@ -848,7 +869,7 @@ double*** initMatMN(int M, int N){
         newMat[i] = vec;
     }
 
-    return &newMat;
+    return newMat;
 }
 
 /* 

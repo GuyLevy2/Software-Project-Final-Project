@@ -5,8 +5,8 @@ int lNorm_func(int, double***, double***, double***);
 int jacobi_func(int, double***, double***, double**);
 int kmeans_c(int, int, int, int, double, double**, double***);
 
-double*** initMat(int);
-double*** initMatMN(int, int);
+double** initMat(int);
+double** initMatMN(int, int);
 void freeMat(int, double***);
 
 int eigenGap(int, double**);
