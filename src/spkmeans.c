@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 int wam_func(double***, int, int, double***);
 int ddg_func(int, double***, double***);
@@ -10,7 +11,7 @@ int kmeans_c(int, int, int, int, double, double**, double***);
 
 double*** initMat(int);
 double*** initMatMN(int, int);
-int freeMat(int, double***);
+void freeMat(int, double***);
 
 int eigenGap(int, double**);
 int sortEigenValuesAndEigenVectors(int, double**, double***);
@@ -23,7 +24,7 @@ int eigenComp(const void*, const void*);
 double vectorDist(double*, double*, int);
 int minusSqrtD(int, double***);
 int identityMat(int, double***);
-int buildRotMat(int, double***, int, int, int*, int*, double***);
+int buildRotMat(double***, int, int, double*, double*, double***);
 int find_ij_pivot(int, double***, int*, int*);
 int matMult(int, double***, double***, double***);
 int matDup(int, double***, double***);
@@ -47,9 +48,8 @@ int main(int argc, char *argv[]) {
     int dimension, line_count;
     char* inputFile;
     double** vectorsList;
-    double EPSILON = 0.001;
+    /*double EPSILON = 0.001;*/
     int inputError;
-    int i, j;
     char* goal;
     double*** wamMat;
     double*** ddgMat;
@@ -65,8 +65,8 @@ int main(int argc, char *argv[]) {
     
     
     /* beginning of algorithm */
-    wamMat = initMat(line_count);
-    wam_func(vectorsList, line_count, dimension, wamMat);
+    wamMat = initMat(line_count);   /* NULL check? */
+    wam_func(&vectorsList, line_count, dimension, wamMat);
     
     /* in case goal == wam:
      print the wam matrix:
@@ -119,6 +119,7 @@ int main(int argc, char *argv[]) {
     /* TODO - need to complete jacobi part and output */
 
     /* TODO - remember to free */
+    return 0;
 }
 
 
@@ -138,7 +139,7 @@ int main(int argc, char *argv[]) {
  */
 int wam_func(double*** vectors_list, int N, int dim, double*** outputWamMat){
     int i, j;
-    double **vec1, **vec2;
+    double *vec1, *vec2;
     double dist;
     
     for (i = 0; i < N; i++){
@@ -300,7 +301,7 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors,
         }
 
         identityMat(N, P);                      /* P = I(N)                                             */
-        buildRotMat(N, A, i, j, &c, &s, P);     /* P is rotate matrix wrt A. Also c and s are updeted   */
+        buildRotMat(A, i, j, &c, &s, P);     /* P is rotate matrix wrt A. Also c and s are updeted   */
         matMult(N, eigenVectors, P, tempMat);   /* tempMat = eigenVectors * P                           */
         matDup(N, tempMat, eigenVectors);       /* eigenVectors = tempMat                               */
         computeA_tag(N, i, j, A, c, s, A_tag);  /* A' = P^T*A*P                                         */
@@ -521,7 +522,6 @@ int identityMat(int N, double*** mat){
  * builds the rotation matrix P using a given symmetric matrix A &
  *      computes s and c values
  * 
- * N: the dimention of both given matrices A,P (NxN)
  * A: a pointer to the given symmetric matrix
  * i,j: the indexes of the pivot element A_ij of the matrix A
  * c_p, s_p: pointers to the output values of c and s
@@ -529,7 +529,7 @@ int identityMat(int N, double*** mat){
  * 
  * returns: 0 if there is no exception and 1 otherwise
  */
-int buildRotMat(int N, double*** A, int i, int j, int* c_p, int* s_p, double*** P){
+int buildRotMat(double*** A, int i, int j, double* c_p, double* s_p, double*** P){
     int sign_theta;
     double theta, abs_theta, t, c, s;
 
@@ -628,10 +628,9 @@ int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
         }
     }
 
-    if(freeMat(N, mat2_T)){
-        return 1;
-    }
-    return 0; // Guy - I think there is no need for transpose and it complicates the function
+    freeMat(N, mat2_T);
+
+    return 0; /* Guy - I think there is no need for transpose and it complicates the function */
 }
 
 /* 
@@ -792,10 +791,10 @@ double offCalc(int N, double*** mat){
  */
 double*** initMat(int N){
     int i, j;
-    double *vec;
-    double **newMat;
+    double *vec = NULL;
+    double **newMat = NULL;
     
-    newMat = (double**)malloc(N * sizeof(double*)); // Guy - should we check if succeeded??? Liad - Yes, and if didn't we should return NULL.
+    newMat = (double**)malloc(N * sizeof(double*)); 
     if(newMat == NULL){
         return NULL;
     }
@@ -828,10 +827,10 @@ double*** initMat(int N){
  */
 double*** initMatMN(int M, int N){
     int i, j;
-    double *vec;
-    double **newMat;
+    double *vec = NULL;
+    double **newMat = NULL;
     
-    newMat = (double**)malloc(M * sizeof(double*)); // Guy - should we check if succeeded??? Liad - Yes, and if didn't we should return NULL.
+    newMat = (double**)malloc(M * sizeof(double*));
     if(newMat == NULL){
         return NULL;
     }
@@ -860,11 +859,11 @@ double*** initMatMN(int M, int N){
  * N: the number of rows of the given matrix (Nx*)
  * mat: the matrix to be freed
  * 
- * returns: NULL 
+ * returns: - 
  * 
  * Guy - there is no point in returning anything - we cannot check for errors in the functions as well
  */
-int freeMat(int N, double*** mat){
+void freeMat(int N, double*** mat){
     int i;
     for (i = 0; i < N; i++){
         free((*mat)[i]);
@@ -889,10 +888,10 @@ void printMat(int m, int n, double*** mat){
 
     for(i = 0; i < m; ++i){
         for (j = 0; j < n - 1; ++j){
-            printf("%.4f", mat[i][j]);
+            printf("%.4f", (*mat)[i][j]);
             printf(",");
         }
-        printf("%.4f", mat[i][n-1]);
+        printf("%.4f", (*mat)[i][n-1]);
         printf("\n");
     }
 }

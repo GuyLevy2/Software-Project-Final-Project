@@ -7,7 +7,7 @@ int kmeans_c(int, int, int, int, double, double**, double***);
 
 double*** initMat(int);
 double*** initMatMN(int, int);
-int freeMat(int, double***);
+void freeMat(int, double***);
 
 int eigenGap(int, double**);
 int sortEigenValuesAndEigenVectors(int, double**, double***);
