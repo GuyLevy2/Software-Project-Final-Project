@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <ctype.h>
+#include "spkmeans.c"
 #include "spkmeans.h"
 
 double** Create_C_Mat_From_PyObj(int, int, PyObject*);
@@ -92,7 +93,7 @@ static PyObject* spk_fit(PyObject *self, PyObject *args){
     PyObject *T_Matrix_obj;    /* output */
 
     /* Get input */
-    if(!PyArg_ParseTuple(args, "iiiO", &dimension, &N, &K, &vec_list_obj)) {
+    if(!PyArg_ParseTuple(args, "iiiO", &N, &dimension, &K, &vec_list_obj)) {
         return Py_BuildValue("");
     }
 
@@ -561,14 +562,14 @@ static PyMethodDef capiMethods[] = {
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "mykmeanssp",
+    "spkmeansmodule",
     NULL,
     -1,
     capiMethods
 };
 
 PyMODINIT_FUNC
-PyInit_mykmeanssp(void)
+PyInit_spkmeansmodule(void)
 {
     PyObject *m;
     m = PyModule_Create(&moduledef);

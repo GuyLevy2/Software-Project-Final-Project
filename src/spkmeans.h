@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <ctype.h>
 
 int wam_func(double***, int, int, double***);
 int ddg_func(int, double***, double***);

@@ -846,23 +846,23 @@ double** initMat(int N){
  * 
  * returns: a new initializes matrix or NULL if an error has occurred
  */
-double** initMatMN(int M, int N){
+double** initMatMN(int rows, int cols){
     int i, j;
     double *vec = NULL;
     double **newMat = NULL;
     
-    newMat = (double**)malloc(M * sizeof(double*));
+    newMat = (double**)malloc(rows * sizeof(double*));
     if(newMat == NULL){
         return NULL;
     }
 
-    for (i = 0; i < N; i++){
-        vec = (double*)malloc(N * sizeof(double));
+    for (i = 0; i < rows; i++){
+        vec = (double*)malloc(cols * sizeof(double));
         if (vec == NULL){
             return NULL;
         }
 
-        for (j = 0; j < N; j++){
+        for (j = 0; j < cols; j++){
             vec[j] = 0;
         }
 
