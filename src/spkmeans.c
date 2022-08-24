@@ -41,13 +41,12 @@ double calcDistSqrt(double*, double*, int);
 int assignVectorToClosestCluster(double*, double****, double**, int**, int, int);
 void resetClusters(int**, int);
 double updateCentroids(int, int, double***, double***, int*);
-int freeMemory(double***, double****, int**, int, int);
+int freeMemory(double****, int**, int);
 
 int main(int argc, char *argv[]) {
     int dimension, line_count, i;
     char* inputFile;
     double** vectorsList;
-    /*double EPSILON = 0.001;*/
     int inputError;
     char* goal;
     double **wamMat, **ddgMat, **LNormMat, **eigenVectors;
@@ -59,8 +58,7 @@ int main(int argc, char *argv[]) {
         printf("Invalid Input!");
         return 1;
     }
-    
-    /* TODO - need to complete jacobi part and output */
+
     /* in case goal == jacobi:
      computes eigenvectors and eigenvalues     
      free memory and abort.
@@ -69,7 +67,7 @@ int main(int argc, char *argv[]) {
         eigenVectors = initMat(line_count); /* NULL CHECK? */
         eigenValues = (double*)malloc(line_count * sizeof(double)); /* NULL CHECK? */
 
-        jacobi_func(line_count, &vectorsList, &eigenVectors, &eigenValues);
+        jacobi_func(line_count, &vectorsList, &eigenVectors, &eigenValues); /*Error check? */
 
         for (i = 0; i < line_count - 1; i++){
             printf("%.4f", eigenValues[i]);
@@ -347,27 +345,28 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors,
 
 int kmeans_c(int k, int dimension, int line_count, int maxIter, double EPSILON,
                                     double** vectorsList, double*** centroidsList){
-    double*** clusterList;
-    double** cluster;
+    double ***clusterList;
+    double **cluster;
     double *vec, *centroid_i;
     double deltaMiu;
-    int* index_to_insert;
+    int *index_to_insert;
     int i, j;
     int iteration_number, freeSuccess;
     
-    index_to_insert = malloc(k * sizeof(int));
+    index_to_insert = (int*)malloc(k * sizeof(int));
     if (index_to_insert == NULL){
         return 0;
     }
 
-    clusterList = malloc(k * sizeof(double**));
+    clusterList = (double***)malloc(k * sizeof(double**));
     if (clusterList == NULL){
         return 0;
     }
     
-
-    for (i = 0; i < k; i++){ /* initializing cluster list, each cluster, and centroids list with first k vectors - the vectors of kmeans++ algorithem. */
-        cluster = malloc(line_count * sizeof(double*));
+    /* initializing cluster list, each cluster, and centroids list 
+        with first k vectors - the vectors of kmeans++ algorithem */
+    for (i = 0; i < k; i++){ 
+        cluster = (double**)malloc(line_count * sizeof(double*));
         if (cluster == NULL){
             return 0;
         }
@@ -376,7 +375,7 @@ int kmeans_c(int k, int dimension, int line_count, int maxIter, double EPSILON,
         
         vec = vectorsList[i];
         
-        centroid_i = malloc(dimension * sizeof(double));
+        centroid_i = (double*)malloc(dimension * sizeof(double));
         if (centroid_i == NULL){
             return 0;
         }
@@ -404,7 +403,7 @@ int kmeans_c(int k, int dimension, int line_count, int maxIter, double EPSILON,
     }
 
     /* Free memory that allocated */
-    freeSuccess = freeMemory(&vectorsList, &clusterList, &index_to_insert, line_count, k);
+    freeSuccess = freeMemory(&clusterList, &index_to_insert, k);
     if (freeSuccess == 0){
         return 0;
     }
@@ -1193,16 +1192,8 @@ double updateCentroids(int dimension, int k, double*** centroidsList, double*** 
     return maxDelta;
 }
 
-int freeMemory(double*** vectorsList, double**** clusterList, int** index_to_insert, int line_count, int k){
+int freeMemory(double**** clusterList, int** index_to_insert, int k){
     int i;
-    /* free vectors */
-    for (i = 0; i < line_count; i++){
-        free((*vectorsList)[i]);
-    }
-    
-    /* free vectors list */
-    free(*vectorsList);
-
     /*free clusters */
     for(i = 0; i < k; i++){
         free((*clusterList)[i]);

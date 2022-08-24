@@ -32,7 +32,7 @@ PyObject* Create_PyObj_Arr_From_C(int, double**);
 static PyObject* kmeans_fit(PyObject *self, PyObject *args){
     int k, dimension, line_count, maxIter, kmeans_success; 
     double EPSILON;
-    double **vectorsList, **centroids_list;
+    double **vectorsList = NULL, **centroids_list = NULL;
 
     PyObject *vec_list_obj;
     PyObject *centroids_list_obj; /* output */
@@ -57,13 +57,13 @@ static PyObject* kmeans_fit(PyObject *self, PyObject *args){
     if (kmeans_success == 0){
         return Py_BuildValue("");
     }
-    
+
     /* Free vectorsList */
     freeMat(line_count, &vectorsList);
 
     /* Output */
     centroids_list_obj = Create_PyObj_Mat_From_C(k, dimension, &centroids_list);
-
+    
     /* Free centroids_list */
     freeMat(k, &centroids_list);
 

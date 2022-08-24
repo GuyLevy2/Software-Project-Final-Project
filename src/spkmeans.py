@@ -19,25 +19,21 @@ def main():
         goal = processedArgs[5]
 
         if goal == "spk":
-            print("spk", N, dimension, K, fileContent)
             # The matrix T is the output after stages (1)-(5) of the spk algorithem
             T = mksp.spk_fit(N, dimension, K, fileContent)
             if T == None:
                 raise Exception
 
             K = np.asarray(T).shape[1] # The final K in the number of columns of the matrix T
-            print("K=", K)
             # stage (6): Treating each row of T as a point in RxK, cluster them into k clusters via the K-means algorithm
             returnValue_K_meansPP = k_meansPP(T, N, K, K)            
-            print("b")
             # Error handling
             if returnValue_K_meansPP == None:
-                print("2")
                 raise Exception
-            print("c")
+
             centroids_keys = returnValue_K_meansPP[0]
             centroids_list = returnValue_K_meansPP[1]
-            print("d")
+
             # Output - printing
             print(','.join(str(item) for item in centroids_keys))
             printFloatMatrix_format(K, centroids_list)
@@ -211,22 +207,15 @@ def k_meansPP(vectorsList, N, K, dimension):
     """
 
     MAX_ITER = 300
-    EPSILON = 0 # ???????TODO NOT MENTIONED???????
-    
-    #sortedOriginalKyes = vectorsList[:,0] TODO not need. there is no key coulmn
-
+    EPSILON = 0.0 
     np.random.seed(0) # SEED
-
     centroids_indexes = []  # index from 0 to N-1
-    #centroids_keys = [] TODO not need. there is no key coulmn
-
     indexes = range(N)
     D = [0.0 for i in indexes]
-
+    
     i = 0
     random_centroid_ind = np.random.choice(N)
     centroids_indexes.append(random_centroid_ind)
-    #centroids_keys.append((int)(sortedOriginalKyes[random_centroid_ind])) TODO not need. there is no key coulmn
 
     while(i < K - 1):
         for ell in indexes:
@@ -234,7 +223,7 @@ def k_meansPP(vectorsList, N, K, dimension):
             for j in range(i + 1):
                 v_ell = np.asarray(vectorsList[ell])
                 v_cent_j = np.asarray(vectorsList[centroids_indexes[j]])
-                dist = np.square(np.linalg.norm(v_ell - v_cent_j)) #TODO not need [1:]. there is no key coulmn
+                dist = np.square(np.linalg.norm(v_ell - v_cent_j))
                 if min_dist == -1 or dist < min_dist:
                     min_dist = dist
             D[ell] = min_dist
@@ -245,22 +234,19 @@ def k_meansPP(vectorsList, N, K, dimension):
         
         random_centroid_ind = np.random.choice(N, p=P)
         centroids_indexes.append(random_centroid_ind)
-        #centroids_keys.append((int)(sortedOriginalKyes[random_centroid_ind]))
+    
     # Reordering vectorsList s.t. the first k vectors are the k cetroids have chosen in kmeans++ algorithem
     vectorsList = np.array(vectorsList)
-
     first_k_vectors = vectorsList[centroids_indexes]
     other_vectors = vectorsList[[i for i in indexes if i not in centroids_indexes]]
     vectorsList = np.concatenate((first_k_vectors, other_vectors), axis=0)
-    # Cut the key value of vectorsList and convert numpu array into python list
-    #vectorsList = vectorsList[:,1:] TODO not need. there is no key coulmn
     vectorsList = vectorsList.tolist()
+    
     # run kmeans algorithen throw C-API
     centroids_list = mksp.kmeans_fit(K, dimension, N, MAX_ITER, EPSILON, vectorsList)
     if centroids_list == None:
         return None # Raise error     
-    print("post-kmeans")
-    #return [centroids_keys, centroids_list] TODO not need. there is no key coulmn
+
     return [centroids_indexes, centroids_list]
 
 def validateAndProcessInput(argsList):
