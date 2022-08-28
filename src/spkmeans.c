@@ -300,6 +300,8 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors,
     matDup(N, symMat, &A_tag);       /* A' = symMat (by values)  */
 
     do{
+        printMat(N, N, &A_tag); /* TODO - testing */
+        printf("/n%d/n", countRot); /* TODO - testing */
         matDup(N, &A_tag, &A);        /* A = A' (by values)       */
          
         if (find_ij_pivot(N, &A, &i, &j)){ /* if A is a diagonal matrix */    
