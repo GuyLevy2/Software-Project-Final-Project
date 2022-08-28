@@ -15,6 +15,5 @@ void freeMat(int, double***);
 
 int eigenGap(int, double**);
 int sortEigenValuesAndEigenVectors(int, double**, double***);
-void SwitchColumnsOfMat(int, int, int, double***);
 int Fill_K_LargestEigenVectors(int, int, double***, double***);
 int ReNormalizedRows(int, int, double***, double***);

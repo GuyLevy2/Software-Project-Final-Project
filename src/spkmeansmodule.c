@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <ctype.h>
-#include "spkmeans.c"
 #include "spkmeans.h"
 
 double** Create_C_Mat_From_PyObj(int, int, PyObject*);

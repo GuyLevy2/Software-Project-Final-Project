@@ -2,22 +2,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include "spkmeans.h"
 
-int wam_func(double***, int, int, double***);
-int ddg_func(int, double***, double***);
-int lNorm_func(int, double***, double***, double***);
-int jacobi_func(int, double***, double***, double**);
-int kmeans_c(int, int, int, int, double, double**, double***);
-
-double** initMat(int);
-double** initMatMN(int, int);
-void freeMat(int, double***);
-
-int eigenGap(int, double**);
-int sortEigenValuesAndEigenVectors(int, double**, double***);
-void SwitchColumnsOfMat(int, int, int, double***);
-int Fill_K_LargestEigenVectors(int, int, double***, double***);
-int ReNormalizedRows(int, int, double***, double***);
 
 /* Granular Utility Functions */
 int eigenComp(const void*, const void*);
@@ -33,6 +19,7 @@ int computeA_tag(int, int, int, double***, double, double, double***);
 int convergenceTest(int, double, double***, double***);
 double offCalc(int, double***);
 void printMat(int, int, double***);
+void SwitchColumnsOfMat(int, int, int, double***);
 
 /* Functions Imported From Previous Excercises */
 int validateAndProcessInput(int, char**, int*, int*, char**, double***, char**);
@@ -44,6 +31,7 @@ double updateCentroids(int, int, double***, double***, int*);
 int freeMemory(double****, int**, int);
 
 int main(int argc, char *argv[]) {
+    double **centroids_list = NULL; //TODO - delete - checking leaks
     int dimension, line_count, i;
     char* inputFile;
     double** vectorsList;
@@ -57,6 +45,18 @@ int main(int argc, char *argv[]) {
     if (!inputError){
         printf("Invalid Input!");
         return 1;
+    }
+
+    if (strcmp(goal, "kmeans") == 0){ //TODO - delete - checking leaks
+        centroids_list = malloc(2 * sizeof(double*));
+        kmeans_c(2, dimension, line_count, 300, 0.0, vectorsList, centroidsList);
+
+        /* Free vectorsList */
+        freeMat(line_count, &vectorsList);
+        /* Free centroids_list */
+        freeMat(2, &centroids_list);
+
+        return 0;
     }
 
     /* in case goal == jacobi:
