@@ -301,7 +301,7 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors,
 
     do{
         printMat(N, N, &A_tag); /* TODO - testing */
-        printf("/n%d/n", countRot); /* TODO - testing */
+        printf("\n%d\n", countRot); /* TODO - testing */
         matDup(N, &A_tag, &A);        /* A = A' (by values)       */
          
         if (find_ij_pivot(N, &A, &i, &j)){ /* if A is a diagonal matrix */    
@@ -726,12 +726,10 @@ int computeA_tag(int N, int i, int j, double*** A, double c, double s, double***
             a_tag_rj = c*((*A)[r][j]) + s*((*A)[r][i]);
 
             (*A_tag)[r][i] = a_tag_ri;
-            /* (*A_tag)[i][r] = a_tag_ri; */
-            /* TODO - undo comment */
+            (*A_tag)[i][r] = a_tag_ri;
             
             (*A_tag)[r][j] = a_tag_rj;
-            /* (*A_tag)[j][r] = a_tag_rj; */ 
-            /* TODO - undo comment */
+            (*A_tag)[j][r] = a_tag_rj
         }
     }
 
@@ -744,8 +742,7 @@ int computeA_tag(int N, int i, int j, double*** A, double c, double s, double***
     (*A_tag)[i][i] = c_squared*a_ii + s_squared*a_jj - 2*s*c*a_ij;
     (*A_tag)[j][j] = s_squared*a_ii + c_squared*a_jj + 2*s*c*a_ij;
     (*A_tag)[i][j] = 0;
-    /* (*A_tag)[j][i] = 0; */
-    /* TODO - undo comment */
+    (*A_tag)[j][i] = 0;
 
     return 0;
 }
