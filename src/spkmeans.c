@@ -1016,7 +1016,8 @@ int validateAndProcessInput(int argc, char* argv[], int* dimension, int* line_co
     }
     
     *goal = argv[1];
-    if (strcmp(*goal, "wam") != 0 &&
+    if (strcmp(*goal, "kmeans") != 0 && /* TODO - delete - checking leaks */
+        strcmp(*goal, "wam") != 0 &&
         strcmp(*goal, "ddg") != 0 &&
         strcmp(*goal, "lnorm") != 0 &&
         strcmp(*goal, "jacobi") != 0){
