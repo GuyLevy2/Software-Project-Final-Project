@@ -14,7 +14,6 @@ int buildRotMat(double***, int, int, double*, double*, double***);
 int find_ij_pivot(int, double***, int*, int*);
 int matMult(int, double***, double***, double***);
 int matDup(int, double***, double***);
-int matTranspose(int, double***, double***);
 int computeA_tag(int, int, int, double***, double, double, double***);
 int convergenceTest(int, double, double***, double***);
 double offCalc(int, double***);
@@ -616,33 +615,19 @@ int find_ij_pivot(int N, double*** A, int* i_p, int* j_p){
  */
 int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
     int i,j,k;
-    double** mat2_T = NULL;
     double m_ij;
-
-    /*
-    mat2_T = initMat(N);
-    if (mat2_T == NULL){
-        return 1;
-    }
-    TODO - need to remove */
-
-    /* matTranspose(N, mat2, &mat2_T); TODO - need to remove for efficiency */
 
     for(i = 0; i < N; i++){
         for(j = 0; j < N; j++){
             m_ij = 0;
             for(k = 0; k < N; k++){
-                m_ij += ((*mat1)[i][k]) * ((mat2)[k][j]);
-                /* multipling using mat2 transposed, mat2_T for decreasing
-                 the cash misses */  
+                m_ij += ((*mat1)[i][k]) * ((*mat2)[k][j]);
             }
             (*outputMat)[i][j] = m_ij;
         }
     }
 
-    /* freeMat(N, &mat2_T); TODO - remove */
-
-    return 0; /* Guy - I think there is no need for transpose and it complicates the function.. Liad - I agree (21/8) */
+    return 0;
 }
 
 /* 
@@ -665,29 +650,6 @@ int matDup(int N, double*** origMat, double*** newMat){
         }
     }
     
-    return 0;
-}
-
-/* 
- * Function: matTranspose
- * ----------------------
- * computes a transpose matrix of a given nxn matrix
- * 
- * N: the dimention of the given matrix (NxN)
- * mat: a pointer to the given matrix
- * matT: a pointer to the output transpose matrix
- * 
- * returns: 0 if there is no exception and 1 otherwise
- */
-int matTranspose(int N, double*** mat, double*** matT){
-    int i,j;
-
-    for(i = 0; i < N; i++){
-        for(j = 0; j < N; j++){
-            (*matT)[j][i] = (*mat)[i][j];
-        }
-    }
-
     return 0;
 }
 
