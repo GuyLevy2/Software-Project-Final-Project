@@ -6,7 +6,7 @@ import sys
 def main():
     try:
         processedArgs = validateAndProcessInput(sys.argv)
-        
+        print("a") # TODO - remove - testing
         if len(processedArgs) == 0: # processedArgs = [] in case of invalid input
             print("Invalid Input!")
             return
@@ -17,17 +17,20 @@ def main():
         inputFileName = processedArgs[3]
         fileContent = processedArgs[4]
         goal = processedArgs[5]
-
+        print("b") # TODO - remove - testing
         if goal == "spk":
             # The matrix T is the output after stages (1)-(5) of the spk algorithem
             T = mksp.spk_fit(N, dimension, K, fileContent)
             if T == None:
                 print(1) # TODO - remove - testing
                 raise Exception
-
+            print("c") # TODO - remove - testing
             K = np.asarray(T).shape[1] # The final K in the number of columns of the matrix T
             # stage (6): Treating each row of T as a point in RxK, cluster them into k clusters via the K-means algorithm
             returnValue_K_meansPP = k_meansPP(T, N, K, K)            
+            
+            print("d") # TODO - remove - testing
+            
             # Error handling
             if returnValue_K_meansPP == None:
                 print(2) # TODO - remove - testing
@@ -35,6 +38,8 @@ def main():
 
             centroids_keys = returnValue_K_meansPP[0]
             centroids_list = returnValue_K_meansPP[1]
+
+            print("e") # TODO - remove - testing
 
             # Output - printing
             print(','.join(str(item) for item in centroids_keys))
