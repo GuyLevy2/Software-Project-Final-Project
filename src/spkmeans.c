@@ -589,7 +589,7 @@ int find_ij_pivot(int N, double*** A, int* i_p, int* j_p){
         }
     }
 
-    if(max_i == 0 || max_j == 0){ /* if all of the off-diagonal elements are zeros */
+    if(max_i == 0 && max_j == 0){ /* if all of the off-diagonal elements are zeros */
         return 1;
     }
 
