@@ -22,10 +22,8 @@ def main():
             if T == None:
                 raise Exception
             K = np.asarray(T).shape[1] # The final K in the number of columns of the matrix T
-            print(K, T) # TODO - remove - testing
             # stage (6): Treating each row of T as a point in RxK, cluster them into k clusters via the K-means algorithm
             returnValue_K_meansPP = k_meansPP(T, N, K, K)            
-            print("d") # TODO - remove - testing
             
             # Error handling
             if returnValue_K_meansPP == None:
@@ -70,9 +68,6 @@ def main():
 
         elif goal == "jacobi":
             eigenValues, eigenVectors = mksp.jacobi_fit(N, fileContent)
-            
-            print(eigenValues) # TODO - remove testing
-            print(eigenVectors) # TODO - remove testing
 
             # Error handling
             if eigenValues == None or eigenVectors == None:
@@ -220,10 +215,7 @@ def k_meansPP(vectorsList, N, K, dimension):
     random_centroid_ind = np.random.choice(N)
     centroids_indexes.append(random_centroid_ind)
 
-    print(vectorsList) # TODO - remove testing
-
     while(i < K - 1):
-        print("H") # TODO - remove testing
         for ell in indexes:
             min_dist = -1
             for j in range(i + 1):
@@ -235,15 +227,10 @@ def k_meansPP(vectorsList, N, K, dimension):
             D[ell] = min_dist
         P = D / (np.sum(D)) # computing Probebilities array
         i+=1
-        
-        print(P) # TODO - remove testing
-        print(P.shape) # TODO - remove testing
-        print(N) # TODO - remove testing
 
         random_centroid_ind = np.random.choice(N, p=P)
         centroids_indexes.append(random_centroid_ind)
-        print("J") # TODO - remove testing
-    print("K") # TODO - remove testing
+
     # Reordering vectorsList s.t. the first k vectors are the k cetroids have chosen in kmeans++ algorithem
     vectorsList = np.array(vectorsList)
     first_k_vectors = vectorsList[centroids_indexes]
@@ -307,9 +294,6 @@ def validateAndProcessInput(argsList):
         fileContent = pd.read_csv(file, header=None)
         fileContent = fileContent.to_numpy()
 
-        #### Sotring the vectors by the column key ###          TODO not need
-        #fileContent = fileContent[fileContent[:,0].argsort(),:] TODO not need
-        #dimension = fileContent.shape[1] - 1                    TODO there is no key coulmn
         dimension = fileContent.shape[1]
         line_count = fileContent.shape[0]
 
