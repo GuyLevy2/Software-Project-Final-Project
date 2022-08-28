@@ -15,5 +15,6 @@ int eigenGap(int, double**);
 int sortEigenValuesAndEigenVectors(int, double**, double***);
 int Fill_K_LargestEigenVectors(int, int, double***, double***);
 int ReNormalizedRows(int, int, double***, double***);
+void printMat(int, int, double***); /* TODO - remove - used in module for testing */
 
 #endif
