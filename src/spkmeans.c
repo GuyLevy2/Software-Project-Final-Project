@@ -53,8 +53,12 @@ int main(int argc, char *argv[]) {
 
         /* Free vectorsList */
         freeMat(line_count, &vectorsList);
-        /* Free centroids_list */
+        
+        printf("1");
+
+        /* 
         freeMat(2, &centroids_list);
+        */ 
 
         return 0;
     }
