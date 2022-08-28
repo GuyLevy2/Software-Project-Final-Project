@@ -299,15 +299,11 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors,
     matDup(N, symMat, &A_tag);       /* A' = symMat (by values)  */
 
     do{
-        /*printMat(N, N, &A_tag);  TODO - testing */
-        /*printf("\n%d\n", countRot); TODO - testing */
         matDup(N, &A_tag, &A);        /* A = A' (by values)       */
          
         if (find_ij_pivot(N, &A, &i, &j)){ /* if A is a diagonal matrix */    
-            /* printf("breaking in i = %d, j = %d\n", i,j); TODO - remove - testing */
             break; 
         }
-        /*printf("out i = %d, j = %d\n", i,j); TODO - remove - testing */
 
         identityMat(N, &P);                      /* P = I(N)                                             */
         buildRotMat(&A, i, j, &c, &s, &P);     /* P is rotate matrix wrt A. Also c and s are updeted   */
@@ -683,9 +679,6 @@ int computeA_tag(int N, int i, int j, double*** A, double c, double s, double***
     double s_squared, c_squared;
     double a_ii, a_jj, a_ij;
 
-    /* matDup(N, A, A_tag); */
-    /* TODO - undo comment */
-
     for(r = 0; r < N; r++){
         if(r != i && r != j){
             a_tag_ri = c*((*A)[r][i]) - s*((*A)[r][j]);
@@ -881,7 +874,7 @@ int sortEigenValuesAndEigenVectors(int N, double **eigenValues, double ***eigenV
     {
         flag = 0;
         for (i = 0; i < N-1; i++){
-            if ((*eigenValues)[i] > (*eigenValues)[i+1]){ /* TODO - change to "<" */
+            if ((*eigenValues)[i] < (*eigenValues)[i+1]){
                 /* Switch operation */
                 flag = 1;
                 
