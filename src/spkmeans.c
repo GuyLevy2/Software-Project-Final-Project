@@ -619,18 +619,20 @@ int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
     double** mat2_T = NULL;
     double m_ij;
 
+    /*
     mat2_T = initMat(N);
     if (mat2_T == NULL){
         return 1;
     }
+    TODO - need to remove */
 
-    matTranspose(N, mat2, &mat2_T);
+    /* matTranspose(N, mat2, &mat2_T); TODO - need to remove for efficiency */
 
     for(i = 0; i < N; i++){
         for(j = 0; j < N; j++){
             m_ij = 0;
             for(k = 0; k < N; k++){
-                m_ij += ((*mat1)[i][k]) * ((mat2_T)[j][k]);
+                m_ij += ((*mat1)[i][k]) * ((mat2)[k][j]);
                 /* multipling using mat2 transposed, mat2_T for decreasing
                  the cash misses */  
             }
@@ -638,7 +640,7 @@ int matMult(int N, double*** mat1, double*** mat2, double*** outputMat){
         }
     }
 
-    freeMat(N, &mat2_T);
+    /* freeMat(N, &mat2_T); TODO - remove */
 
     return 0; /* Guy - I think there is no need for transpose and it complicates the function.. Liad - I agree (21/8) */
 }
