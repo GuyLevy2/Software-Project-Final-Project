@@ -71,6 +71,9 @@ def main():
         elif goal == "jacobi":
             eigenValues, eigenVectors = mksp.jacobi_fit(N, fileContent)
             
+            print(eigenValues) # TODO - remove testing
+            print(eigenVectors) # TODO - remove testing
+
             # Error handling
             if eigenValues == None or eigenVectors == None:
                 raise Exception
