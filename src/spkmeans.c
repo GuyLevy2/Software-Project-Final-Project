@@ -547,7 +547,7 @@ int buildRotMat(double*** A, int i, int j, double* c_p, double* s_p, double*** P
     abs_theta = fabs(theta);
     sign_theta = theta >= 0 ? 1 : -1;
 
-    t = (sign_theta*1.0) / (abs_theta + sqrt((theta * theta)) + 1));
+    t = (sign_theta*1.0) / (abs_theta + sqrt((theta * theta) + 1));
 
     c = 1.0 / sqrt((t * t) + 1);
     s = t*c;
