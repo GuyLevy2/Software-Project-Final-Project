@@ -218,6 +218,7 @@ def k_meansPP(vectorsList, N, K, dimension):
     centroids_indexes.append(random_centroid_ind)
 
     while(i < K - 1):
+        print("H") # TODO - remove testing
         for ell in indexes:
             min_dist = -1
             for j in range(i + 1):
@@ -227,14 +228,13 @@ def k_meansPP(vectorsList, N, K, dimension):
                 if min_dist == -1 or dist < min_dist:
                     min_dist = dist
             D[ell] = min_dist
-        print("H") # TODO - remove testing
         P = D / (np.sum(D)) # computing Probebilities array
-        print("J") # TODO - remove testing
         i+=1
         
         random_centroid_ind = np.random.choice(N, p=P)
         centroids_indexes.append(random_centroid_ind)
-    
+        print("J") # TODO - remove testing
+    print("K") # TODO - remove testing
     # Reordering vectorsList s.t. the first k vectors are the k cetroids have chosen in kmeans++ algorithem
     vectorsList = np.array(vectorsList)
     first_k_vectors = vectorsList[centroids_indexes]
