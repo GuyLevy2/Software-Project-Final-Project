@@ -19,10 +19,10 @@ def main():
         goal = processedArgs[5]
 
         if goal == "spk":
-            print(1) # TODO - remove - testing
             # The matrix T is the output after stages (1)-(5) of the spk algorithem
             T = mksp.spk_fit(N, dimension, K, fileContent)
             if T == None:
+                print(1) # TODO - remove - testing
                 raise Exception
 
             K = np.asarray(T).shape[1] # The final K in the number of columns of the matrix T
@@ -30,6 +30,7 @@ def main():
             returnValue_K_meansPP = k_meansPP(T, N, K, K)            
             # Error handling
             if returnValue_K_meansPP == None:
+                print(2) # TODO - remove - testing
                 raise Exception
 
             centroids_keys = returnValue_K_meansPP[0]
