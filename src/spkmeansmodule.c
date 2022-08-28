@@ -153,6 +153,10 @@ static PyObject* spk_fit(PyObject *self, PyObject *args){
 
     /* U = largest_k_eigenvectors */
     success = sortEigenValuesAndEigenVectors(N, &eigenValues, &eigenVectors);
+
+    /* TODO - remove testing */
+    printMat(N,N,&eigenVectors);
+
     if(success == 1){
         return Py_BuildValue("");
     }
@@ -165,6 +169,9 @@ static PyObject* spk_fit(PyObject *self, PyObject *args){
         return Py_BuildValue("");
     }
 
+    /* TODO - remove testing */
+    printMat(N,K,&U);
+
     /* T = renormlized(U) */
     T = initMatMN(N, K);
     if (T == NULL){
@@ -174,6 +181,9 @@ static PyObject* spk_fit(PyObject *self, PyObject *args){
     if(success == 1){
         return Py_BuildValue("");
     }
+
+    /* TODO - remove testing */
+    printMat(N,K,&T);
 
     /* Free */
     freeMat(N, &vectorsList);
