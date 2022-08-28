@@ -729,7 +729,7 @@ int computeA_tag(int N, int i, int j, double*** A, double c, double s, double***
             (*A_tag)[i][r] = a_tag_ri;
             
             (*A_tag)[r][j] = a_tag_rj;
-            (*A_tag)[j][r] = a_tag_rj
+            (*A_tag)[j][r] = a_tag_rj;
         }
     }
 
