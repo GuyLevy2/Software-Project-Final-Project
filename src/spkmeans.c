@@ -587,7 +587,6 @@ int find_ij_pivot(int N, double*** A, int* i_p, int* j_p){
         }
     }
 
-    /* TODO https://moodle.tau.ac.il/mod/forum/discuss.php?d=127788 */
     if(max_i == 0 || max_j == 0){ /* if all of the off-diagonal elements are zeros */
         return 1;
     }
@@ -716,7 +715,8 @@ int computeA_tag(int N, int i, int j, double*** A, double c, double s, double***
     double s_squared, c_squared;
     double a_ii, a_jj, a_ij;
 
-    matDup(N, A, A_tag);
+    /* matDup(N, A, A_tag); */
+    /* TODO - undo comment */
 
     for(r = 0; r < N; r++){
         if(r != i && r != j){
@@ -724,10 +724,12 @@ int computeA_tag(int N, int i, int j, double*** A, double c, double s, double***
             a_tag_rj = c*((*A)[r][j]) + s*((*A)[r][i]);
 
             (*A_tag)[r][i] = a_tag_ri;
-            (*A_tag)[i][r] = a_tag_ri;
+            /* (*A_tag)[i][r] = a_tag_ri; */
+            /* TODO - undo comment */
             
             (*A_tag)[r][j] = a_tag_rj;
-            (*A_tag)[j][r] = a_tag_rj;
+            /* (*A_tag)[j][r] = a_tag_rj; */ 
+            /* TODO - undo comment */
         }
     }
 
@@ -740,7 +742,8 @@ int computeA_tag(int N, int i, int j, double*** A, double c, double s, double***
     (*A_tag)[i][i] = c_squared*a_ii + s_squared*a_jj - 2*s*c*a_ij;
     (*A_tag)[j][j] = s_squared*a_ii + c_squared*a_jj + 2*s*c*a_ij;
     (*A_tag)[i][j] = 0;
-    (*A_tag)[j][i] = 0;
+    /* (*A_tag)[j][i] = 0; */
+    /* TODO - undo comment */
 
     return 0;
 }
