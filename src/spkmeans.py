@@ -19,6 +19,7 @@ def main():
         goal = processedArgs[5]
 
         if goal == "spk":
+            print(1) # TODO - remove - testing
             # The matrix T is the output after stages (1)-(5) of the spk algorithem
             T = mksp.spk_fit(N, dimension, K, fileContent)
             if T == None:
@@ -79,7 +80,7 @@ def main():
             print(','.join(str("%.4f"%item) for item in eigenValues))
             printFloatMatrix_format(N, eigenVectors)
     
-        
+
         """ OPTION B
         if goal == "jacobi":
             eigenValues, eigenVectors = mksp.jacobi_fit(N, fileContent)
