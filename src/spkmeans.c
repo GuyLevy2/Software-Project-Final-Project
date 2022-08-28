@@ -1,8 +1,8 @@
-#include "spkmeans.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include "spkmeans.h"
 
 
 /* Granular Utility Functions */

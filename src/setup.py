@@ -19,6 +19,5 @@ setup(
             'spkmeansmodule',
             ['spkmeansmodule.c'],
         ),
-    ],
-    headers = ['spkmeans.h']
+    ]
 )
