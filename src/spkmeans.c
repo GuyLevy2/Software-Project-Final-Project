@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 
     if (strcmp(goal, "kmeans") == 0){ /* TODO - delete - checking leaks */
         centroids_list = malloc(2 * sizeof(double*));
-        kmeans_c(2, dimension, line_count, 300, 0.0, vectorsList, centroids_list);
+        kmeans_c(2, dimension, line_count, 300, 0.0, vectorsList, &centroids_list);
 
         /* Free vectorsList */
         freeMat(line_count, &vectorsList);
