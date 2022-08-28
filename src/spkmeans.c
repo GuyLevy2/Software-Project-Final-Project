@@ -480,7 +480,7 @@ double vectorDist(double* v1, double* v2, int dim){
         dist += (v1[i] - v2[i]) * (v1[i] - v2[i]);
     }
 
-    dist = pow(dist, 0.5);
+    dist = sqrt(dist);
     return dist;
 }
 
@@ -547,9 +547,9 @@ int buildRotMat(double*** A, int i, int j, double* c_p, double* s_p, double*** P
     abs_theta = fabs(theta);
     sign_theta = theta >= 0 ? 1 : -1;
 
-    t = (sign_theta*1.0) / (abs_theta + pow(pow(theta, 2.0) + 1, 0.5));
+    t = (sign_theta*1.0) / (abs_theta + sqrt((theta * theta)) + 1));
 
-    c = 1.0 / pow(pow(t, 2.0) + 1, 0.5);
+    c = 1.0 / sqrt((t * t) + 1);
     s = t*c;
 
     *c_p = c;
@@ -699,8 +699,8 @@ int computeA_tag(int N, int i, int j, double*** A, double c, double s, double***
         }
     }
 
-    s_squared = pow(s, 2.0);
-    c_squared = pow(c, 2.0);
+    s_squared = (s * s);
+    c_squared = (c * c);
     a_ii = (*A)[i][i];
     a_jj = (*A)[j][j];
     a_ij = (*A)[i][j];
@@ -747,7 +747,7 @@ double offCalc(int N, double*** mat){
     for(i = 0; i < N; i++){
         for(j = 0; j < N; j++){
             if(j != i){
-                off += pow((*mat)[i][j], 2.0);
+                off += ((*mat)[i][j] * (*mat)[i][j]);
             }
         }
     }
@@ -926,9 +926,9 @@ int ReNormalizedRows(int N, int K, double ***U, double ***T){
     for (i = 0; i < N; i++){
         rowSum = 0;
         for (j = 0; j < K; j++){
-            rowSum += pow((*U)[i][j], 2.0);
+            rowSum += ((*U)[i][j] * (*U)[i][j]);
         } 
-        rowSum = pow(rowSum, 0.5);
+        rowSum = sqrt(rowSum);
 
         for (j = 0; j < K; j++){
             (*T)[i][j] = (*U)[i][j] / rowSum;
@@ -1074,7 +1074,7 @@ double calcDistSqrt(double* v1, double* v2, int d){
     int i = 0;
     
     for(i = 0; i < d; ++i){
-        dist += pow(v1[i]-v2[i], 2.0);
+        dist += ((v1[i]-v2[i]) * (v1[i]-v2[i]));
     }
     return dist;
 }
@@ -1137,7 +1137,7 @@ double updateCentroids(int dimension, int k, double*** centroidsList, double*** 
             centroidDelta += indexDelta * indexDelta;
         }
         
-        centroidDelta = pow(centroidDelta, 0.5);
+        centroidDelta = sqrt(centroidDelta);
 
         if (centroidDelta > maxDelta || maxDelta == -1.0){
             maxDelta = centroidDelta;
