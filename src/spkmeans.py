@@ -231,6 +231,10 @@ def k_meansPP(vectorsList, N, K, dimension):
         P = D / (np.sum(D)) # computing Probebilities array
         i+=1
         
+        print(P) # TODO - remove testing
+        print(P.shape) # TODO - remove testing
+        print(N) # TODO - remove testing
+
         random_centroid_ind = np.random.choice(N, p=P)
         centroids_indexes.append(random_centroid_ind)
         print("J") # TODO - remove testing
