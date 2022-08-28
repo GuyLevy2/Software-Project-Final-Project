@@ -18,6 +18,8 @@ setup(
         Extension(
             'spkmeansmodule',
             ['spkmeansmodule.c'],
+            'spkmeans',
+            ['spkmeans.c']
         ),
     ]
 )
