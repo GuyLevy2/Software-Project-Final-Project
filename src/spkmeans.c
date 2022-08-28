@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-
+#include "spkmeans.h"
 
 
 /* Granular Utility Functions */
@@ -31,7 +31,6 @@ double updateCentroids(int, int, double***, double***, int*);
 int freeMemory(double****, int**, int);
 
 int main(int argc, char *argv[]) {
-    double **centroids_list = NULL; /* TODO - delete - checking leaks */
     int dimension, line_count, i;
     char* inputFile;
     double** vectorsList;
@@ -45,22 +44,6 @@ int main(int argc, char *argv[]) {
     if (!inputError){
         printf("Invalid Input!");
         return 1;
-    }
-
-    if (strcmp(goal, "kmeans") == 0){ /* TODO - delete - checking leaks */
-        centroids_list = malloc(2 * sizeof(double*));
-        kmeans_c(2, dimension, line_count, 300, 0.0, vectorsList, &centroids_list);
-
-        /* Free vectorsList */
-        freeMat(line_count, &vectorsList);
-        
-        printf("1");
-
-        /* 
-        freeMat(2, &centroids_list);
-        */ 
-
-        return 0;
     }
 
     /* in case goal == jacobi:
@@ -1020,8 +1003,7 @@ int validateAndProcessInput(int argc, char* argv[], int* dimension, int* line_co
     }
     
     *goal = argv[1];
-    if (strcmp(*goal, "kmeans") != 0 && /* TODO - delete - checking leaks */
-        strcmp(*goal, "wam") != 0 &&
+    if (strcmp(*goal, "wam") != 0 &&
         strcmp(*goal, "ddg") != 0 &&
         strcmp(*goal, "lnorm") != 0 &&
         strcmp(*goal, "jacobi") != 0){
