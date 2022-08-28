@@ -217,6 +217,8 @@ def k_meansPP(vectorsList, N, K, dimension):
     random_centroid_ind = np.random.choice(N)
     centroids_indexes.append(random_centroid_ind)
 
+    print(vectorsList) # TODO - remove testing
+
     while(i < K - 1):
         print("H") # TODO - remove testing
         for ell in indexes:
