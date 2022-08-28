@@ -79,7 +79,7 @@ def main():
             print(','.join(str("%.4f"%item) for item in eigenValues))
             printFloatMatrix_format(N, eigenVectors)
     
-    
+        
         """ OPTION B
         if goal == "jacobi":
             eigenValues, eigenVectors = mksp.jacobi_fit(N, fileContent)
