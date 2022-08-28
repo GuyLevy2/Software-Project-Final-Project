@@ -1,10 +1,10 @@
 #define PY_SSIZE_T_CLEAN
+#include "spkmeans.h"
 #include <Python.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <ctype.h>
-#include "spkmeans.h"
 
 double** Create_C_Mat_From_PyObj(int, int, PyObject*);
 PyObject* Create_PyObj_Mat_From_C(int, int, double***);
