@@ -474,7 +474,7 @@ double vectorDist(double* v1, double* v2, int dim){
     int i = 0;
     
     for(i = 0; i < dim; i++){
-        dist += pow(v1[i] - v2[i], 2.0);
+        dist += (v1[i] - v2[i]) * (v1[i] - v2[i]);
     }
 
     dist = pow(dist, 0.5);
