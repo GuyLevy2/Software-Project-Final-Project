@@ -475,10 +475,10 @@ int eigenComp(const void* a, const void* b){
     if (diff > 0){
         return 1;
     }
-    elif (diff < 0){
+    else if (diff < 0){
         return -1;
     }
-    
+
     return 0;
 }
 
