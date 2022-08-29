@@ -427,22 +427,7 @@ int eigenGap(int N, double** eigenValues){
         eigenValuesDup[i] = (*eigenValues)[i];
     }
 
-    /* TODO - remove testing */
-    printf("eigenvalues \n");
-    for (i = 0; i < N; i++){
-        printf("%.4f ", eigenValuesDup[i]);
-    }
-    printf("end of values \n");
-
     qsort(eigenValuesDup, N, sizeof(double), eigenComp);
-
-    /* TODO - remove testing */
-    printf("\n eigenvalues \n");
-    for (i = 0; i < N; i++){
-        printf("%.4f ", eigenValuesDup[i]);
-    }
-    printf("\n end of values \n");
-
 
     for (i = 0; i < floor(N/2); i++){
         delta = fabs(eigenValuesDup[i+1] - eigenValuesDup[i]);
