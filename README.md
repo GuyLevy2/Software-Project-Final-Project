@@ -2,11 +2,7 @@
 
 # TODO
 
-- read code for comments:
--   python -    DONE
--   module -    DONE
--   c -         DONE
-
+- read code for comments - DONE
 - efficiency - DONE
 
 - check edge cases:
