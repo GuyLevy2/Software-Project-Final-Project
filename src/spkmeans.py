@@ -16,7 +16,7 @@ def main():
         inputFileName = processedArgs[3]
         fileContent = processedArgs[4]
         goal = processedArgs[5]
-        
+
         if goal == "spk":
             # The matrix T is the output after stages (1)-(5) of the spk algorithem
             T = mksp.spk_fit(N, dimension, K, fileContent)
@@ -150,7 +150,9 @@ def k_meansPP(vectorsList, N, K, dimension):
     random_centroid_ind = np.random.choice(N)
     centroids_indexes.append(random_centroid_ind)
 
+    # K means ++ iterations
     while(i < K - 1):
+        # computing distance array
         for ell in indexes:
             min_dist = -1
             for j in range(i + 1):
@@ -160,9 +162,10 @@ def k_meansPP(vectorsList, N, K, dimension):
                 if min_dist == -1 or dist < min_dist:
                     min_dist = dist
             D[ell] = min_dist
-        P = D / (np.sum(D)) # computing Probebilities array
+        # computing Probebilities array
+        P = D / (np.sum(D))
         i+=1
-
+        # choosing centroid
         random_centroid_ind = np.random.choice(N, p=P)
         centroids_indexes.append(random_centroid_ind)
 

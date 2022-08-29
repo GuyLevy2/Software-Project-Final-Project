@@ -6,6 +6,8 @@
 #include <ctype.h>
 #include "spkmeans.h"
 
+/* Function Declerations */
+
 double** Create_C_Mat_From_PyObj(int, int, PyObject*);
 PyObject* Create_PyObj_Mat_From_C(int, int, double***);
 PyObject* Create_PyObj_Arr_From_C(int, double**);
@@ -48,7 +50,7 @@ static PyObject* kmeans_fit(PyObject *self, PyObject *args){
     }
     
     /* Body */
-    centroids_list = malloc(k * sizeof(double*));   /* The inner vectors are initialized in kmeans_c function !!! */
+    centroids_list = malloc(k * sizeof(double*));
     if (centroids_list == NULL){
         return Py_BuildValue("");
     }
@@ -92,7 +94,7 @@ static PyObject* spk_fit(PyObject *self, PyObject *args){
     PyObject *vec_list_obj;     /* input */
     PyObject *T_Matrix_obj;    /* output */
 
-    /* Get input */
+    /* input */
     if(!PyArg_ParseTuple(args, "iiiO", &N, &dimension, &K, &vec_list_obj)) {
         return Py_BuildValue("");
     }
@@ -215,7 +217,7 @@ static PyObject* wam_fit(PyObject *self, PyObject *args){
     PyObject *vec_list_obj;     /* input */
     PyObject *wamMatrix_obj;    /* output */
 
-    /* Get input */
+    /* input */
     if(!PyArg_ParseTuple(args, "iiO", &N, &dimension, &vec_list_obj)) {
         return Py_BuildValue("");
     }

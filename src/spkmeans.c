@@ -6,7 +6,6 @@
 
 /* === Function Declerations === */
 
-/* Granular Utility Functions */
 int eigenComp(const void*, const void*);
 int minusSqrtD(int, double***);
 int identityMat(int, double***);
@@ -20,10 +19,7 @@ double offCalc(int, double***);
 void printMat(int, int, double***);
 void SwitchColumnsOfMat(int, int, int, double***);
 void printError();
-
-/* Functions Imported From Previous Excercises */
 int validateAndProcessInput(int, char**, int*, int*, char**, double***, char**);
-int isValidInteger(char*);
 double calcDistSquared(double*, double*, int);
 int assignVectorToClosestCluster(double*, double****, double**, int**, int, int);
 void resetClusters(int**, int);
@@ -33,16 +29,13 @@ int freeMemory(double****, int**, int);
 /* === End Of Function Declerations === */
 
 int main(int argc, char *argv[]) {
-    int dimension, line_count, i;
-    char* inputFile;
-    double** vectorsList;
-    int inputError;
-    char* goal;
-    double **wamMat, **ddgMat, **LNormMat, **eigenVectors;
+    int dimension, line_count, i, inputError, success;
+    char *inputFile, *goal;
     double *eigenValues;
-    int success;
+    double **vectorsList, **wamMat, **ddgMat, **LNormMat, **eigenVectors;
 
-    inputError = validateAndProcessInput(argc, argv, &dimension, &line_count, &inputFile, &vectorsList, &goal);
+    inputError = validateAndProcessInput(argc, argv, &dimension, &line_count,
+         &inputFile, &vectorsList, &goal);
     
     if (!inputError){
         printf("Invalid Input!");
@@ -66,13 +59,14 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
+        /* Jacobi procedure call */
         success = jacobi_func(line_count, &vectorsList, &eigenVectors, &eigenValues);
         if (success == 1){
             printError();
             return 1;
         }
 
-
+        /* printing output */
         for (i = 0; i < line_count - 1; i++){
             printf("%.4f", eigenValues[i]);
             printf(",");
@@ -81,6 +75,7 @@ int main(int argc, char *argv[]) {
         printf("\n");
         printMat(line_count, line_count, &eigenVectors);
         
+        /* free */
         free(eigenValues);
         freeMat(line_count, &eigenVectors);
         freeMat(line_count, &vectorsList);
@@ -95,6 +90,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    /* wam procedure call */
     success = wam_func(&vectorsList, line_count, dimension, &wamMat);
     if (success == 1){
         printError();
@@ -121,6 +117,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    /* ddg procedure */
     success = ddg_func(line_count, &wamMat, &ddgMat);
     if (success == 1){
         printError();
@@ -141,13 +138,13 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-
     LNormMat = initMat(line_count);
     if (LNormMat == NULL){
         printError();
         return 1;
     }
 
+    /* lNorm procedure */
     success = lNorm_func(line_count, &wamMat, &ddgMat, &LNormMat);
     if (success == 1){
         printError();
@@ -251,7 +248,9 @@ int ddg_func(int N, double*** wamMat, double*** outputDdgMat){
  * 
  * returns: 0
  */
-int lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** outputLNormMat){
+int lNorm_func(int N, double*** wamMat, double*** ddgMat,
+     double*** outputLNormMat){
+    
     int i, j;
     double **minusSqrtMat = NULL, **tmpMat = NULL;
 
@@ -370,8 +369,24 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors,
     return 0;
 }
 
+/* 
+ * Function: kmeans_c
+ * --------------------
+ * preforms the k-means algorithm
+ * 
+ * k: the number of centroids
+ * dimension: the dimension of the vectors
+ * line_count: the number of vectors
+ * maxIter: the maximum number of iterations
+ * EPSILON: the value for convergence
+ * vectorsList: the list of vectors
+ * centroidsList: a pointer to a list to be used for centroids
+ * 
+ * returns: 0 in case of correct run and 1 otherwise
+ */
 int kmeans_c(int k, int dimension, int line_count, int maxIter, double EPSILON,
-                                    double** vectorsList, double*** centroidsList){
+     double** vectorsList, double*** centroidsList){
+    
     double ***clusterList;
     double **cluster;
     double *vec, *centroid_i;
@@ -417,6 +432,7 @@ int kmeans_c(int k, int dimension, int line_count, int maxIter, double EPSILON,
     deltaMiu = EPSILON*2;
     iteration_number = 0;
 
+    /* iterations of kmeans */
     while(deltaMiu >= EPSILON && iteration_number < maxIter){
         for(i = 0; i < line_count; ++i){
             vec = vectorsList[i];
@@ -558,7 +574,9 @@ int identityMat(int N, double*** mat){
  * 
  * returns: 0 if there is no exception and 1 otherwise
  */
-int buildRotMat(double*** A, int i, int j, double* c_p, double* s_p, double*** P){
+int buildRotMat(double*** A, int i, int j, double* c_p,
+     double* s_p, double*** P){
+    
     int sign_theta;
     double theta, abs_theta, t, c, s;
 
@@ -696,7 +714,9 @@ int matDup(int N, double*** origMat, double*** newMat){
  * 
  * returns: 0
  */
-int computeA_tag(int N, int i, int j, double*** A, double c, double s, double*** A_tag){
+int computeA_tag(int N, int i, int j, double*** A, double c,
+     double s, double*** A_tag){
+    
     int r;
     double a_tag_ri, a_tag_rj;
     double s_squared, c_squared;
@@ -852,7 +872,6 @@ double** initMatMN(int rows, int cols){
  * 
  * returns: - 
  * 
- * Guy - there is no point in returning anything - we cannot check for errors in the functions as well
  */
 void freeMat(int N, double*** mat){
     int i;
@@ -901,8 +920,20 @@ void printError(){
 
 /* Functions for spk proccedure */
 
-
-int sortEigenValuesAndEigenVectors(int N, double **eigenValues, double ***eigenVectors){
+/* 
+ * Function: sortEigenValuesAndEigenVectors
+ * ---------------------------------
+ * sorting the eigenvalues and corresponding eigenvectors in decreasing order
+ * 
+ * N: the number of eigenvalues and eigenvectors and the dimension of eigenvectors
+ * eigenValues: a pointer to the list of eigenvalues
+ * eigenVectos: a pointer to the list of eigenvectors
+ * 
+ * returns: 0
+ */
+int sortEigenValuesAndEigenVectors(int N, double **eigenValues,
+     double ***eigenVectors){
+    
     int i;
     double temp;
     int flag = 1;
@@ -926,6 +957,17 @@ int sortEigenValuesAndEigenVectors(int N, double **eigenValues, double ***eigenV
     return 0;
 }
 
+/* 
+ * Function: SwitchColumnsOfMat
+ * ---------------------------------
+ * switching the columns of a given matrix
+ * 
+ * numOfRows: the number of rows in the matrix
+ * i,j: the index of columns to be switched
+ * mat: a pointer to the matrix
+ * 
+ * returns: -
+ */
 void SwitchColumnsOfMat(int numOfRows, int i, int j, double ***mat){
     double temp;
     int m;
@@ -937,6 +979,18 @@ void SwitchColumnsOfMat(int numOfRows, int i, int j, double ***mat){
     }
 }
 
+/* 
+ * Function: Fill_K_LargestEigenVectors
+ * ---------------------------------
+ * initialize matrix U with the values in the first k columns of given matrix
+ * 
+ * N: dimensions of the matrices (NxN)
+ * K: the number of columns to copy
+ * eigenVectors: a pointer to the matrix from which the columns will be copied
+ * U: a pointer to the matrix to copy into
+ * 
+ * returns: 0
+ */
 int Fill_K_LargestEigenVectors(int N, int K, double ***eigenVectors, double ***U){
     int i, j;
 
@@ -949,6 +1003,18 @@ int Fill_K_LargestEigenVectors(int N, int K, double ***eigenVectors, double ***U
     return 0;
 }
 
+/* 
+ * Function: ReNormalizedRows
+ * ---------------------------------
+ * re-normalizes the rows of a given matrix
+ * 
+ * N: number of rows in the matrices
+ * K: number of columns in the matrices
+ * U: input matrix
+ * T: output matrix
+ * 
+ * returns: 0
+ */
 int ReNormalizedRows(int N, int K, double ***U, double ***T){
     int i, j;
     double rowSum = 0;
@@ -970,9 +1036,6 @@ int ReNormalizedRows(int N, int K, double ***U, double ***T){
     return 0;
 }
 
-
-/* Functions Imported From Previous Excercises */
-
 /* 
  * Function: validateAndProcessInput
  * ---------------------------------
@@ -988,7 +1051,9 @@ int ReNormalizedRows(int N, int K, double ***U, double ***T){
  * 
  * returns: 0 if the input is invalid and 1 if the input is valid
  */
-int validateAndProcessInput(int argc, char* argv[], int* dimension, int* line_count, char** inputFile, double*** vectorsList, char** goal){
+int validateAndProcessInput(int argc, char* argv[], int* dimension,
+     int* line_count, char** inputFile, double*** vectorsList, char** goal){
+
     int after_firstline;
     double *vec;
     int vectors_index;
@@ -1014,7 +1079,8 @@ int validateAndProcessInput(int argc, char* argv[], int* dimension, int* line_co
 
     *inputFile = argv[2];
     
-    fp1 = fopen(*inputFile, "r"); /* First open */
+    /* First open - for dimension and number of vectors */
+    fp1 = fopen(*inputFile, "r");
     if (fp1 == NULL){ /* if can't open the file. */
         return 0;
     }
@@ -1040,7 +1106,8 @@ int validateAndProcessInput(int argc, char* argv[], int* dimension, int* line_co
     
     fclose(fp1);
 
-    fp2 = fopen(*inputFile, "r"); /* Second open */
+    /* Second open - reading the values and allocating vectors in memory */
+    fp2 = fopen(*inputFile, "r"); 
     if (fp2 == NULL){ /* if can't open the file. */
         return 0;
     }
@@ -1070,37 +1137,16 @@ int validateAndProcessInput(int argc, char* argv[], int* dimension, int* line_co
 }
 
 /* 
- * Function: isValidInteger
+ * Function: calcDistSquared
  * ------------------------
- * checks if a string represents a valid int
+ * computes the Euclidian distance between to vectors, squared
  *  
- * str: the string to be checked
+ * v1: the first vector
+ * v2: the second vector
+ * d: the dimension of the vectors
  * 
- * returns: 1 if the string is a valid int, and 0 otherwise
+ * returns: the Euclidian distance between to vectors, squared
  */
-int isValidInteger(char* str){
-    int i;
-    char c;
-
-    if (str[0] == '\0'){
-        return 0;
-    }
-    
-    i = 0;
-    c = str[0];
-    while (c != '\0'){ /* checking that str is a valid number */
-      if (c < 48 || c > 57){
-         return 0; /* str is not an integer */
-      }
-      else{
-         i++;
-      }
-    c = str[i];
-   }
-
-   return 1;
-}
-
 double calcDistSquared(double* v1, double* v2, int d){
     double dist = 0;
     int i = 0;
@@ -1111,7 +1157,24 @@ double calcDistSquared(double* v1, double* v2, int d){
     return dist;
 }
 
-int assignVectorToClosestCluster(double* vector, double**** clusterList, double** centroidsList, int** index_to_insert, int k, int d){
+/* 
+ * Function: assignVectorToClosestCluster
+ * ------------------------
+ * finds and assignes a given vector to the closest cluster by its centroid
+ *  
+ * 
+ * vector: the vector to assign
+ * clusterList: a pointer to the list of clusters
+ * centroidsList: the list of centroids
+ * index_to_insert: a pointer to the list of last insert indexes for each cluster
+ * k: the number of centroids
+ * d: the dimension of the vectors
+ * 
+ * returns: 1
+ */
+int assignVectorToClosestCluster(double* vector, double**** clusterList,
+     double** centroidsList, int** index_to_insert, int k, int d){
+    
     double minDist = -1.0, dist = 0.0;
     int minDistIndex = -1, i = 0;
     double* cent_vec;
@@ -1136,6 +1199,16 @@ int assignVectorToClosestCluster(double* vector, double**** clusterList, double*
     return 1;   
 }
 
+/* 
+ * Function: resetClusters
+ * ------------------------
+ * resets the last indexes for insert in the clusters 
+ *  
+ * index_to_insert: a pointer to the list of last insert indexes for each cluster
+ * k: the number of centroids
+ * 
+ * returns: -
+ */
 void resetClusters(int** index_to_insert, int k){
    int i;
    
@@ -1144,7 +1217,22 @@ void resetClusters(int** index_to_insert, int k){
    }
 }
 
-double updateCentroids(int dimension, int k, double*** centroidsList, double*** clusterList, int* index_to_insert){
+/* 
+ * Function: updateCentroids
+ * ------------------------
+ * updates the centroids for each cluster
+ * 
+ * dimension: the dimension of the vectors 
+ * k: the number of centroids
+ * centroidsList: a pointer to the list of centroids 
+ * clusterList: the list of clusters
+ * index_to_insert: a pointer to the list of last insert indexes for each cluster
+ * 
+ * returns: the maximum distance between an old and a new centroid for some centroid
+ */
+double updateCentroids(int dimension, int k, double*** centroidsList,
+     double*** clusterList, int* index_to_insert){
+    
     double maxDelta = -1.0, centroidDelta = 0.0, indexDelta = 0.0;
     int i, j, m;
 
@@ -1179,6 +1267,17 @@ double updateCentroids(int dimension, int k, double*** centroidsList, double*** 
     return maxDelta;
 }
 
+/* 
+ * Function: freeMemory
+ * ------------------------
+ * frees memory for clusters, and index to insert list
+ * 
+ * clusterList: a pointer to the list of cluster 
+ * index_to_insert: a pointer to the list of last insert indexes for each cluster
+ * k: the number of centroids
+ * 
+ * returns: 1
+ */
 int freeMemory(double**** clusterList, int** index_to_insert, int k){
     int i;
     /*free clusters */
