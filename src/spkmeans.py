@@ -23,7 +23,11 @@ def main():
                 raise Exception
             K = np.asarray(T).shape[1] # The final K in the number of columns of the matrix T
             # stage (6): Treating each row of T as a point in RxK, cluster them into k clusters via the K-means algorithm
-            returnValue_K_meansPP = k_meansPP(T, N, K, K)            
+            returnValue_K_meansPP = k_meansPP(T, N, K, K)
+
+            # Error handling
+            if K == 1:
+                raise Exception            
             
             # Error handling
             if returnValue_K_meansPP == None:
