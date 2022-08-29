@@ -21,13 +21,15 @@ def main():
             T = mksp.spk_fit(N, dimension, K, fileContent)
             if T == None:
                 raise Exception
+            
             K = np.asarray(T).shape[1] # The final K in the number of columns of the matrix T
-            # stage (6): Treating each row of T as a point in RxK, cluster them into k clusters via the K-means algorithm
-            returnValue_K_meansPP = k_meansPP(T, N, K, K)
 
             # Error handling
             if K == 1:
-                raise Exception            
+                raise Exception 
+                       
+            # stage (6): Treating each row of T as a point in RxK, cluster them into k clusters via the K-means algorithm
+            returnValue_K_meansPP = k_meansPP(T, N, K, K)
             
             # Error handling
             if returnValue_K_meansPP == None:
