@@ -437,7 +437,7 @@ int eigenGap(int N, double** eigenValues){
             k = i + 1; /* TODO - we added 1 so that we will not have k = 0 */
         }
         /* TODO - remove testing */
-        prinf("%d", k);
+        printf("%d", k);
     }
 
     free(eigenValuesDup);
