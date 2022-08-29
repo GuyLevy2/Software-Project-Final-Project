@@ -427,7 +427,7 @@ int eigenGap(int N, double** eigenValues){
         eigenValuesDup[i] = (*eigenValues)[i];
     }
 
-    qsort(eigenValuesDup, N, sizeof(double), eigenComp); 
+    qsort(eigenValuesDup, N, sizeof(double), eigenComp);
 
     /* TODO - remove testing */
     printf("eigenvalues \n");
@@ -462,7 +462,7 @@ int eigenGap(int N, double** eigenValues){
  * returns: >0 if (a<b), 0 if (a==b), <0 otherwise
  */
 int eigenComp(const void* a, const void* b){
-    return *((double*)b) - *((double*)a);
+    return (*(double*)b - *(double*)a);
 }
 
 /* 
