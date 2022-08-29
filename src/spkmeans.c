@@ -437,11 +437,11 @@ int eigenGap(int N, double** eigenValues){
     qsort(eigenValuesDup, N, sizeof(double), eigenComp);
 
     /* TODO - remove testing */
-    printf("eigenvalues \n");
+    printf("\n eigenvalues \n");
     for (i = 0; i < N; i++){
         printf("%.4f ", eigenValuesDup[i]);
     }
-    printf("end of values \n");
+    printf("\n end of values \n");
 
 
     for (i = 0; i < floor(N/2); i++){
@@ -469,8 +469,17 @@ int eigenGap(int N, double** eigenValues){
  * returns: >0 if (a<b), 0 if (a==b), <0 otherwise
  */
 int eigenComp(const void* a, const void* b){
-    printf("%.4f", *(double*)b); /* TODO - remove */
-    return (*(double*)b - *(double*)a);
+    int res;
+    double diff = ((*(double*)b) - (*(double*)a));
+
+    if (diff > 0){
+        return 1;
+    }
+    elif (diff < 0){
+        return -1;
+    }
+    
+    return 0;
 }
 
 /* 
