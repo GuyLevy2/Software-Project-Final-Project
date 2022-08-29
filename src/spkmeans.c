@@ -469,7 +469,6 @@ int eigenGap(int N, double** eigenValues){
  * returns: >0 if (a<b), 0 if (a==b), <0 otherwise
  */
 int eigenComp(const void* a, const void* b){
-    int res;
     double diff = ((*(double*)b) - (*(double*)a));
 
     if (diff > 0){
