@@ -62,17 +62,12 @@ int main(int argc, char *argv[]) {
 
         eigenValues = (double*)malloc(line_count * sizeof(double));
         if (eigenValues == NULL){
-            freeMat(line_count, &eigenVectors);
-            freeMat(line_count, &vectorsList);
             printError();
             return 1;
         }
 
         success = jacobi_func(line_count, &vectorsList, &eigenVectors, &eigenValues);
         if (success == 1){
-            freeMat(line_count, &eigenVectors);
-            freeMat(line_count, &vectorsList);
-            free(eigenValues);
             printError();
             return 1;
         }
@@ -96,15 +91,12 @@ int main(int argc, char *argv[]) {
     /* beginning of algorithm */
     wamMat = initMat(line_count);
     if (wamMat == NULL){
-        freeMat(line_count, &vectorsList);
         printError();
         return 1;
     }
 
     success = wam_func(&vectorsList, line_count, dimension, &wamMat);
     if (success == 1){
-        freeMat(line_count, &vectorsList);
-        freeMat(line_count, &wamMat);
         printError();
         return 1;
     }
@@ -125,17 +117,12 @@ int main(int argc, char *argv[]) {
 
     ddgMat = initMat(line_count);
     if (ddgMat == NULL){
-        freeMat(line_count, &wamMat);
-        freeMat(line_count, &vectorsList);
         printError();
         return 1;
     }
 
     success = ddg_func(line_count, &wamMat, &ddgMat);
     if (success == 1){
-        freeMat(line_count, &vectorsList);
-        freeMat(line_count, &wamMat);
-        freeMat(line_count, &ddgMat);
         printError();
         return 1;
     }
@@ -157,19 +144,12 @@ int main(int argc, char *argv[]) {
 
     LNormMat = initMat(line_count);
     if (LNormMat == NULL){
-        freeMat(line_count, &wamMat);
-        freeMat(line_count, &ddgMat);
-        freeMat(line_count, &vectorsList);
         printError();
         return 1;
     }
 
     success = lNorm_func(line_count, &wamMat, &ddgMat, &LNormMat);
     if (success == 1){
-        freeMat(line_count, &wamMat);
-        freeMat(line_count, &ddgMat);
-        freeMat(line_count, &LNormMat);
-        freeMat(line_count, &vectorsList);
         printError();
         return 1;
     }
@@ -286,7 +266,6 @@ int lNorm_func(int N, double*** wamMat, double*** ddgMat, double*** outputLNormM
     /* calculating (D^-0.5*W*D^-0.5) */
     tmpMat = initMat(N);
     if (tmpMat == NULL){
-        freeMat(N, &minusSqrtMat);
         return 1;
     }
 
@@ -344,22 +323,16 @@ int jacobi_func(int N, double*** symMat, double*** eigenVectors,
     
     A_tag = initMat(N);
     if (A_tag == NULL){
-        freeMat(N, &A);
         return 1;
     }
     
     tempMat = initMat(N);
     if (tempMat == NULL){
-        freeMat(N, &A);
-        freeMat(N, &A_tag);
         return 1;
     }
 
     P = initMat(N);
     if (P == NULL){
-        freeMat(N, &A);
-        freeMat(N, &A_tag);
-        freeMat(N, &P);
         return 1;
     }
 
@@ -404,17 +377,16 @@ int kmeans_c(int k, int dimension, int line_count, int maxIter, double EPSILON,
     double *vec, *centroid_i;
     double deltaMiu;
     int *index_to_insert;
-    int i, j;
-    int iteration_number, freeSuccess;
+    int i, j, iteration_number;
     
     index_to_insert = (int*)malloc(k * sizeof(int));
     if (index_to_insert == NULL){
-        return 0;
+        return 1;
     }
 
     clusterList = (double***)malloc(k * sizeof(double**));
     if (clusterList == NULL){
-        return 0;
+        return 1;
     }
     
     /* initializing cluster list, each cluster, and centroids list 
@@ -422,7 +394,7 @@ int kmeans_c(int k, int dimension, int line_count, int maxIter, double EPSILON,
     for (i = 0; i < k; i++){ 
         cluster = (double**)malloc(line_count * sizeof(double*));
         if (cluster == NULL){
-            return 0;
+            return 1;
         }
 
         clusterList[i] = cluster;
@@ -431,7 +403,7 @@ int kmeans_c(int k, int dimension, int line_count, int maxIter, double EPSILON,
         
         centroid_i = (double*)malloc(dimension * sizeof(double));
         if (centroid_i == NULL){
-            return 0;
+            return 1;
         }
 
         for (j = 0; j < dimension; j++){
@@ -457,12 +429,9 @@ int kmeans_c(int k, int dimension, int line_count, int maxIter, double EPSILON,
     }
 
     /* Free memory that allocated */
-    freeSuccess = freeMemory(&clusterList, &index_to_insert, k);
-    if (freeSuccess == 0){
-        return 0;
-    }
+    freeMemory(&clusterList, &index_to_insert, k);
 
-    return 1;
+    return 0;
 }
 
 

@@ -54,7 +54,7 @@ static PyObject* kmeans_fit(PyObject *self, PyObject *args){
     }
 
     kmeans_success = kmeans_c(k, dimension, line_count, maxIter, EPSILON, vectorsList, &centroids_list);
-    if (kmeans_success == 0){
+    if (kmeans_success == 1){
         return Py_BuildValue("");
     }
 
