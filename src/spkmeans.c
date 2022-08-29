@@ -434,8 +434,10 @@ int eigenGap(int N, double** eigenValues){
         
         if (delta > maxDelta){
             maxDelta = delta;
-            k = i;
+            k = i + 1; /* TODO - we added 1 so that we will not have k = 0 */
         }
+        /* TODO - remove testing */
+        prinf("%d", k);
     }
 
     free(eigenValuesDup);
