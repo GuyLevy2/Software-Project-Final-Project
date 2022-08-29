@@ -7,7 +7,6 @@
 
 /* Granular Utility Functions */
 int eigenComp(const void*, const void*);
-double vectorDist(double*, double*, int);
 int minusSqrtD(int, double***);
 int identityMat(int, double***);
 int buildRotMat(double***, int, int, double*, double*, double***);
@@ -23,7 +22,7 @@ void SwitchColumnsOfMat(int, int, int, double***);
 /* Functions Imported From Previous Excercises */
 int validateAndProcessInput(int, char**, int*, int*, char**, double***, char**);
 int isValidInteger(char*);
-double calcDistSqrt(double*, double*, int);
+double calcDistSquared(double*, double*, int);
 int assignVectorToClosestCluster(double*, double****, double**, int**, int, int);
 void resetClusters(int**, int);
 double updateCentroids(int, int, double***, double***, int*);
@@ -37,6 +36,7 @@ int main(int argc, char *argv[]) {
     char* goal;
     double **wamMat, **ddgMat, **LNormMat, **eigenVectors;
     double *eigenValues;
+    int success;
 
     inputError = validateAndProcessInput(argc, argv, &dimension, &line_count, &inputFile, &vectorsList, &goal);
     
@@ -50,10 +50,29 @@ int main(int argc, char *argv[]) {
      free memory and abort.
      else - continue with the next goals */
     if (strcmp(goal, "jacobi") == 0){
-        eigenVectors = initMat(line_count); /* NULL CHECK? */
-        eigenValues = (double*)malloc(line_count * sizeof(double)); /* NULL CHECK? */
+        eigenVectors = initMat(line_count);
+        if (eigenVectors == NULL){
+            printError();
+            return 1;
+        }
 
-        jacobi_func(line_count, &vectorsList, &eigenVectors, &eigenValues); /*Error check? */
+        eigenValues = (double*)malloc(line_count * sizeof(double));
+        if (eigenValues == NULL){
+            freeMat(line_count, &eigenVectors);
+            freeMat(line_count, &vectorsList);
+            printError();
+            return 1;
+        }
+
+        success = jacobi_func(line_count, &vectorsList, &eigenVectors, &eigenValues);
+        if (success == 1){
+            freeMat(line_count, &eigenVectors);
+            freeMat(line_count, &vectorsList);
+            free(eigenValues);
+            printError();
+            return 1;
+        }
+
 
         for (i = 0; i < line_count - 1; i++){
             printf("%.4f", eigenValues[i]);
@@ -71,9 +90,22 @@ int main(int argc, char *argv[]) {
     }
 
     /* beginning of algorithm */
-    wamMat = initMat(line_count);   /* NULL check? */
-    wam_func(&vectorsList, line_count, dimension, &wamMat); /* success check? */
+    wamMat = initMat(line_count);
+    if (wamMat == NULL){
+        freeMat(line_count, &vectorsList);
+        printError();
+        return 1;
+    }
+
+    success = wam_func(&vectorsList, line_count, dimension, &wamMat);
+    if (success == 1){
+        freeMat(line_count, &vectorsList);
+        freeMat(line_count, &wamMat);
+        printError();
+        return 1;
+    }
     
+
     /* in case goal == wam:
      print the wam matrix:
      free memory and abort.
@@ -88,7 +120,21 @@ int main(int argc, char *argv[]) {
     }
 
     ddgMat = initMat(line_count);
-    ddg_func(line_count, &wamMat, &ddgMat);
+    if (ddgMat == NULL){
+        freeMat(line_count, &wamMat);
+        freeMat(line_count, &vectorsList);
+        printError();
+        return 1;
+    }
+
+    success = ddg_func(line_count, &wamMat, &ddgMat);
+    if (success == 1){
+        freeMat(line_count, &vectorsList);
+        freeMat(line_count, &wamMat);
+        freeMat(line_count, &ddgMat);
+        printError();
+        return 1;
+    }
 
     /* in case goal == ddg:
      print the ddg matrix:
@@ -104,9 +150,26 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    LNormMat = initMat(line_count);
-    lNorm_func(line_count, &wamMat, &ddgMat, &LNormMat);
 
+    LNormMat = initMat(line_count);
+    if (LNormMat == NULL){
+        freeMat(line_count, &wamMat);
+        freeMat(line_count, &ddgMat);
+        freeMat(line_count, &vectorsList);
+        printError();
+        return 1;
+    }
+
+    success = lNorm_func(line_count, &wamMat, &ddgMat, &LNormMat);
+    if (success == 1){
+        freeMat(line_count, &wamMat);
+        freeMat(line_count, &ddgMat);
+        freeMat(line_count, &LNormMat);
+        freeMat(line_count, &vectorsList);
+        printError();
+        return 1;
+    }
+    
     /* in case goal == lnorm:
      print the lnorm matrix:
      free memory and abort.
@@ -122,7 +185,6 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    /* TODO - remember to free */
     return 0;
 }
 
@@ -154,7 +216,7 @@ int wam_func(double*** vectors_list, int N, int dim, double*** outputWamMat){
             else{
                 vec1 = (*vectors_list)[i];
                 vec2 = (*vectors_list)[j];
-                dist = vectorDist(vec1, vec2, dim);
+                dist = sqrt(calcDistSquared(vec1, vec2, dim));
                 (*outputWamMat)[i][j] = exp(-(dist/2.0));
             }
         }
@@ -464,29 +526,6 @@ int eigenComp(const void* a, const void* b){
     }
 
     return 0;
-}
-
-/* 
- * Function: vectorDist
- * --------------------
- * calculates the euclid norm of the subtraction of 2 vectors
- * 
- * v1: the first vector
- * v2: the second vector
- * dim: the dimension of the vectors
- * 
- * returns: the norm
- */
-double vectorDist(double* v1, double* v2, int dim){
-    double dist = 0;
-    int i = 0;
-    
-    for(i = 0; i < dim; i++){
-        dist += (v1[i] - v2[i]) * (v1[i] - v2[i]);
-    }
-
-    dist = sqrt(dist);
-    return dist;
 }
 
 /* 
@@ -873,6 +912,18 @@ void printMat(int m, int n, double*** mat){
     }
 }
 
+/* 
+ * Function: printError
+ * ---------------------
+ * prints the error message
+ * 
+ * returns: NULL 
+ * 
+ */
+void printError(){
+    printf("An Error Has Occurred");
+}
+
 /* Functions for spk proccedure */
 int sortEigenValuesAndEigenVectors(int N, double **eigenValues, double ***eigenVectors){
     int i;
@@ -1073,7 +1124,7 @@ int isValidInteger(char* str){
    return 1;
 }
 
-double calcDistSqrt(double* v1, double* v2, int d){
+double calcDistSquared(double* v1, double* v2, int d){
     double dist = 0;
     int i = 0;
     
@@ -1091,7 +1142,7 @@ int assignVectorToClosestCluster(double* vector, double**** clusterList, double*
     
     for (i = 0; i < k; ++i){
         cent_vec = centroidsList[i];
-        dist = calcDistSqrt(vector, cent_vec, d);
+        dist = calcDistSquared(vector, cent_vec, d);
         
         if ((dist < minDist) || (minDist == -1.0)){
             minDist = dist;
