@@ -5,7 +5,7 @@
 - read code for comments:
 -   python -    DONE
 -   module -    DONE
--   c -         func descriptions and comments in MAIN done - need to check comments in the functions
+-   c -         DONE
 
 - efficiency - DONE
 
