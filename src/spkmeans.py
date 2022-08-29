@@ -83,80 +83,8 @@ def main():
             print(','.join(str("%.4f"%item) for item in eigenValues))
             printFloatMatrix_format(N, eigenVectors)
     
-
-        """ OPTION B
-        if goal == "jacobi":
-            eigenValues, eigenVectors = mksp.jacobi_fit(N, fileContent)
-            
-            # Error handling
-            if eigenValues == None or eigenVectors == None:
-                raise Exception
-
-            # Output - printing
-            print(','.join(str("%.4f"%item) for item in eigenValues))
-            printFloatMatrix_format(N, eigenVectors)
-        else:
-            # (1) Form the weighted adjacency matrix W from X (a list of vectors)
-            X = fileContent
-            wam = mksp.wam_fit(N, dimension, X)
-            # Error handling
-            if wam == None:
-                raise Exception
-            if goal == "wam":
-                printFloatMatrix_format(N, wam)
-                return
-
-            # (2) Compute the normalized graph Laplacian Lnorm
-            ddg = mksp.ddg_fit(N, wam)
-            # Error handling
-            if ddg == None:
-                raise Exception
-            if goal == "ddg":
-                printFloatMatrix_format(N, ddg)
-                return
-
-            lnorm = mksp.lnorm_fit(N, wam, ddg)
-            # Error handling
-            if lnorm == None: 
-                raise Exception
-            if goal == "lnorm":
-                printFloatMatrix_format(N, lnorm)
-                return
-
-            # goal = "spk"
-            # (3) Determine k and obtain the largest k eigenvectors Lnorm    
-            eigenValues, eigenVectors = mksp.jacobi_fit(N, lnorm)
-            # Error handling
-            if eigenValues == None or eigenVectors == None:
-                raise Exception
-
-            if K == 0:  # computes K by the eigengap heuristic method
-                K = mksp.eigengapHeuristic_fit(N, eigenValues)
-                # Error handling
-                if K == None:
-                    raise Exception
-            
-            # (4) Let U be the matrix containing the largest k eigenvectors as columns (NxK)
-            U = largest_K_eigenvectors(K, eigenVectors, eigenValues)
-
-            # (5) Form the matrix T from U by renormalizing each of U's rows to have unit length
-            T = normalizeU(U)
-
-            # (6) Treating each row of T as a point in Rk, cluster them into k clusters via the K-means algorithm
-            returnValue_K_meansPP = k_meansPP(T, N, K, K)            
-            # Error handling
-            if returnValue_K_meansPP == None:
-                raise Exception
-            
-            centroids_keys = returnValue_K_meansPP[0]
-            centroids_list = returnValue_K_meansPP[1]
-            
-            # Output - printing
-            print(','.join(str(item) for item in centroids_keys))
-            printFloatMatrix_format(K, centroids_list)
-        """
     except:
-        print("An Error Has Occurred")
+        print("An Error Has Occurred", end=" ") # TODO - remove "end=" ""
         return 
     
     return 
