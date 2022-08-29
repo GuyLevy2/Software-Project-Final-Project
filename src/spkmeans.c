@@ -436,9 +436,9 @@ int eigenGap(int N, double** eigenValues){
             maxDelta = delta;
             k = i + 1; /* TODO - we added 1 so that we will not have k = 0 */
         }
-        /* TODO - remove testing */
-        printf("%d", k);
     }
+    /* TODO - remove testing */
+    printf("%d", k);
 
     free(eigenValuesDup);
     
@@ -456,7 +456,7 @@ int eigenGap(int N, double** eigenValues){
  * returns: >0 if (a<b), 0 if (a==b), <0 otherwise
  */
 int eigenComp(const void* a, const void* b){
-    double diff = ((*(double*)b) - (*(double*)a));
+    double diff = -((*(double*)b) - (*(double*)a)); /* TODO - remove the "-" */
 
     if (diff > 0){
         return 1;
