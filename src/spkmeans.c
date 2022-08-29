@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
          &inputFile, &vectorsList, &goal);
     
     if (!inputError){
-        printf("Invalid Input!#"); /* TODO - delete #*/
+        printf("Invalid Input!");
         return 1;
     }
 
