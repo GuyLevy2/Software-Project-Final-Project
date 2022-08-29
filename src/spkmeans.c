@@ -18,6 +18,7 @@ int convergenceTest(int, double, double***, double***);
 double offCalc(int, double***);
 void printMat(int, int, double***);
 void SwitchColumnsOfMat(int, int, int, double***);
+void printError();
 
 /* Functions Imported From Previous Excercises */
 int validateAndProcessInput(int, char**, int*, int*, char**, double***, char**);
