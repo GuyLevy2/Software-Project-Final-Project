@@ -883,7 +883,7 @@ int sortEigenValuesAndEigenVectors(int N, double **eigenValues, double ***eigenV
     {
         flag = 0;
         for (i = 0; i < N-1; i++){
-            if ((*eigenValues)[i] < (*eigenValues)[i+1]){ /* TODO - flip direction in - testing */
+            if ((*eigenValues)[i] > (*eigenValues)[i+1]){ /* TODO - flip direction in - testing */
                 /* Switch operation */
                 flag = 1;
                 
