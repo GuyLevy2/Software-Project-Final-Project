@@ -2,10 +2,9 @@
 
 # TODO
 
-- fix spk
+
 - read code for comments
 - efficiency
 - read forum for new instructions as mentioned in whatsapp
-
-TODO 2 (liad)
-Free allocated memory in cases of detected errors during the run of the programm?
+- check edge cases
+- check freeing in case of errors (c main is good, left only module)

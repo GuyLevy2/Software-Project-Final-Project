@@ -4,6 +4,7 @@
 #include <string.h>
 #include "spkmeans.h"
 
+/* === Function Declerations === */
 
 /* Granular Utility Functions */
 int eigenComp(const void*, const void*);
@@ -28,6 +29,8 @@ int assignVectorToClosestCluster(double*, double****, double**, int**, int, int)
 void resetClusters(int**, int);
 double updateCentroids(int, int, double***, double***, int*);
 int freeMemory(double****, int**, int);
+
+/* === End Of Function Declerations === */
 
 int main(int argc, char *argv[]) {
     int dimension, line_count, i;
@@ -189,6 +192,8 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+
+/* === Function Definitions === */
 
 /* Main Utility Functions */
 
@@ -926,6 +931,8 @@ void printError(){
 }
 
 /* Functions for spk proccedure */
+
+
 int sortEigenValuesAndEigenVectors(int N, double **eigenValues, double ***eigenVectors){
     int i;
     double temp;
@@ -1218,3 +1225,5 @@ int freeMemory(double**** clusterList, int** index_to_insert, int k){
 
     return 1;
 }
+
+/* === End Of Function Definitions === */
