@@ -923,8 +923,10 @@ int ReNormalizedRows(int N, int K, double ***U, double ***T){
         } 
         rowSum = sqrt(rowSum);
 
-        for (j = 0; j < K; j++){
-            (*T)[i][j] = (*U)[i][j] / rowSum;
+        if (rowSum != 0){
+            for (j = 0; j < K; j++){
+                (*T)[i][j] = (*U)[i][j] / rowSum;
+            }
         }
     }
 
