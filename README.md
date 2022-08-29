@@ -12,4 +12,4 @@
 -   empty file
 
 - ask about csv format. (the default export in excel, UTF-8,  does not work because it has a 
-    few bytes in the beginning)
+    few bytes in the beginning. project working whith normal CSV format).
