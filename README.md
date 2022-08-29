@@ -4,6 +4,10 @@
 
 
 - read code for comments
+-   python - done
+-   c - 
+-   module - 
+
 - efficiency
 - read forum for new instructions as mentioned in whatsapp
 - check edge cases

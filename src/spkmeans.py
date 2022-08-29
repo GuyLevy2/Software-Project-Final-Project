@@ -16,6 +16,7 @@ def main():
         inputFileName = processedArgs[3]
         fileContent = processedArgs[4]
         goal = processedArgs[5]
+        
         if goal == "spk":
             # The matrix T is the output after stages (1)-(5) of the spk algorithem
             T = mksp.spk_fit(N, dimension, K, fileContent)
