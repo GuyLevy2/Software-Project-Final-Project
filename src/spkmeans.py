@@ -85,7 +85,7 @@ def main():
             printFloatMatrix_format(N, eigenVectors)
     
     except:
-        print("An Error Has Occurred", end="") # TODO - remove "end=" ""
+        print("An Error Has Occurred")
         return 
     
     return 

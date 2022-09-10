@@ -507,7 +507,7 @@ int eigenGap(int N, double** eigenValues){
  * returns: >0 if (a<b), 0 if (a==b), <0 otherwise
  */
 int eigenComp(const void* a, const void* b){
-    double diff = ((*(double*)b) - (*(double*)a)); /* TODO - removed the "-" for current semester - NOW CORRECT */
+    double diff = ((*(double*)b) - (*(double*)a));
 
     if (diff > 0){
         return 1;
@@ -942,7 +942,7 @@ int sortEigenValuesAndEigenVectors(int N, double **eigenValues,
     {
         flag = 0;
         for (i = 0; i < N-1; i++){
-            if ((*eigenValues)[i] < (*eigenValues)[i+1]){ /* TODO - flip direction in - testing - NOW CORRECT */
+            if ((*eigenValues)[i] < (*eigenValues)[i+1]){
                 /* Switch operation */
                 flag = 1;
                 
