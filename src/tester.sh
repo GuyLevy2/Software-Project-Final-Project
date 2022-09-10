@@ -17,6 +17,7 @@ testers_path=$1
 leaks=$2
 output_file="./tmp/output.txt"
 valgrind_file="./tmp/valgrind.txt"
+readarray -t k_array < $1/k_array.txt
 
 # buffering between tests
 function buffer() {
@@ -53,14 +54,22 @@ function regular_test() {
 
 	if [[ $interface == @(py|both) ]]; then
 		
-		# if no regular tests were ordered, we shouldn't run the CPython interface test (happens when $regular == no, $leaks == yes)
-		if [[ $regular == "no" ]]; then
-			return
+		# If on nova, no pint on checking memory leaks, if regular="no" noting left to do in regular_test
+		valgrindversion=$(valgrind --version)
+		if [[ $valgrindversion == "valgrind-3.10.0.SVN" ]]; then
+			echo -e "Valgrind on NOVA can't detect memory leaks"
+			leaks="no"
+			if [[ $regular == "no" ]]; then
+				return
+			fi
 		fi
 	
 		# testing the CPython interface
 		rm $results_dir/test_transcript_py.txt &> /dev/null
+		rm $results_dir/memory_transcript_py.txt &> /dev/null
 		touch $results_dir/test_transcript_py.txt
+		touch $results_dir/memory_transcript_py.txt
+		cp $testers_path/valgrind-python.supp valgrind-python.supp
 		echo -e "\e[4;37mTesting correct outputs for the interface of \e[4;33m\e[1;33mPython\e[0m:"
 		echo -e "\n\e[4;34m\e[1;34mRESULTS\e[0m"
 		test_interface py
@@ -98,13 +107,13 @@ function test_goal() {
 	if [[ "${2}" == "jacobi" ]]; then
 		for (( i = 0; i <= $jacobi; i++ )); do
 			echo -n "${1^^}: ${2^^}: ${testers_path}/jacobi_${i}.txt: "
-			individual_test $1 $2 jacobi_$i.txt
+			individual_test $1 $2 jacobi_$i.txt 0
 			echo
 		done
 	else
 		for (( i = 0; i <= $spk; i++ )); do
 			echo -n "${1^^}: ${2^^}: ${testers_path}/spk_${i}.txt: "
-			individual_test $1 $2 spk_$i.txt
+			individual_test $1 $2 spk_$i.txt $i
 			echo
 		done
 	fi
@@ -121,10 +130,15 @@ function individual_test() {
 	# the first argument shall be the interface being tested: c/py
 	# the second argument shall be the goal being tested
 	# the third argument shall be the input file being used
+	# the fourth argument shall be the input file index
 
 	# running the commands
 	if [[ "${1}" == "py" ]]; then # if we are testing the python interface
-		python3 spkmeans.py 0 $2 $testers_path/$3 &> $output_file
+		if [[ $leaks == "yes" ]]; then
+			valgrind --leak-check=full --show-leak-kinds=definite --log-file=$valgrind_file --suppressions=valgrind-python.supp python3.8-dbg -E spkmeans.py ${k_array[$4]} $2 $testers_path/$3 &> $output_file
+		else
+			python3 -E spkmeans.py ${k_array[$4]} $2 $testers_path/$3 &> $output_file
+		fi
 	elif [[ "${1}" == "c" ]]; then # if we are testing the C interface
 		valgrind --leak-check=full --show-leak-kinds=all --log-file=$valgrind_file ./spkmeans $2 $testers_path/$3 &> $output_file
 	else
@@ -146,7 +160,7 @@ function individual_test() {
 		fi
 	fi
 	
-	# if the interface is C, verdict if the test had a memory leak, and print an appropriate status accordingly
+	# verdict if the test had a memory leak, and print an appropriate status accordingly
 	if [[ $leaks == "yes" ]]; then
 		if [[ $1 == "c" ]]; then
 		
@@ -156,10 +170,24 @@ function individual_test() {
 			fi
 			
 			# running memory test
-			verdict_memory_loss
+			verdict_memory_loss_c
 			echo -e "MEMORY LEAK RESULT FOR: ${1}: ${2}: ${3}:\n\n" >> $results_dir/memory_transcript_c.txt
 			cat $valgrind_file >> $results_dir/memory_transcript_c.txt
 			echo -e "\n\n\n" >> $results_dir/memory_transcript_c.txt
+		fi
+
+		if [[ $1 == "py" ]]; then
+		
+			# buffering
+			if [[ $regular == "yes" ]]; then
+				echo -n ": "
+			fi
+			
+			# running memory test
+			verdict_memory_loss_py
+			echo -e "MEMORY LEAK RESULT FOR: ${1}: ${2}: ${3}:\n\n" >> $results_dir/memory_transcript_py.txt
+			cat $valgrind_file >> $results_dir/memory_transcript_py.txt
+			echo -e "\n\n\n" >> $results_dir/memory_transcript_py.txt
 		fi
 	fi
 }
@@ -181,7 +209,7 @@ function verdict_diff() {
 
 
 
-function verdict_memory_loss() {
+function verdict_memory_loss_c() {
 	# this function shall be used only upon the C interface comprehensive test
 	# this function assumes the $valgrind_file matches the very last running of a test using the C interface
 	
@@ -191,6 +219,23 @@ function verdict_memory_loss() {
 		echo -ne '\033[1;32mNO MEMORY LEAK\e[0m' # print out a 'success' message
 	else
 		echo -ne "\e[1;31mMEMORY LEAK\e[0m" # print out a 'failed' message
+	fi
+}
+
+function verdict_memory_loss_py() {
+	# this function shall be used only upon the Py interface comprehensive test
+	# this function assumes the $valgrind_file matches the very last running of a test using the Py interface
+	
+	if grep -q "LEAK SUMMARY" $valgrind_file; then
+		bytes_lost=$(cat $valgrind_file | grep "LEAK SUMMARY" -A 1 | tail -n1 | awk '{print $4}')
+		
+		if [[ ${bytes_lost//,} -eq 0 ]]; then
+			echo -ne '\033[1;32mNO MEMORY LEAK\e[0m' # print out a 'success' message
+		else
+			echo -ne "\e[1;31mMEMORY LEAK\e[0m" # print out a 'failed' message
+		fi
+	else
+    	echo -ne "\e[1;31mCouldn't Find LEAK SUMMARY in Valgrind output, can't know if there is a leak\e[0m" # print out a 'failed' message
 	fi
 }
 
@@ -362,7 +407,7 @@ function comprehensive_test() {
 	
 	
 	# Summary 
-	echo -e "\033[4;31m\e[1;31mDONE -> NOTICE:\e[0m\nDetailed regular tests' results are in: \e[1;34m${results_dir}/test_transcript_[c|py].txt\e[0m.\nDetailed memory leak tests' results have their memory reports at \e[1;34m${results_dir}/memory_transcript_c.txt\e[0m.\nDetailed efficiency tests' results have their efficiency reports at \e[1;34m${results_dir}/efficiency_transcript_[c|py].txt\e[0m.\n\e[4;37mOnly the results of failed tests will be viewed in the transcripts.\e[0m"
+	echo -e "\033[4;31m\e[1;31mDONE -> NOTICE:\e[0m\nDetailed regular tests' results are in: \e[1;34m${results_dir}/test_transcript_[c|py].txt\e[0m.\nDetailed memory leak tests' results have their memory reports at \e[1;34m${results_dir}/memory_transcript_[c|py].txt\e[0m.\nDetailed efficiency tests' results have their efficiency reports at \e[1;34m${results_dir}/efficiency_transcript_[c|py].txt\e[0m.\n\e[4;37mOnly the results of failed tests will be viewed in the transcripts.\e[0m"
 }
 
 
@@ -377,23 +422,26 @@ function instructions() {
 - testfiles	<path>: 	The path of the directory containing the test files that were supplied with this test.
 - interface 	[c|py|both]:	Specifies the interface you want to test.
 - regular 	[yes|no]:	Specifies whether to run the regular tests or not.
-- leaks		[yes|no]:	Specifies if you want memory leak tests. Applies to the \e[4;37m\e[1;37mC\e[0m interface only.
+- leaks		[yes|no]:	Specifies if you want memory leak tests.
 - efficiency	[yes|no]:	Specifies whether you want an efficiency test on the interfaces you chose.
 - results_dir	<path>:		Creates a new directory to store the tests' results into (default: running directory).
 
 \e[4;37m\e[1;37mNotes\e[0m: 
 (1) The efficiency tests are quite long, take that into account.
 (2) Detailed regular tests' results are saved into \`\033[4;37mtest_transcript_<interface>.txt\e[0m\`.
-(3) Detailed memory leak tests' results are saved into \`\033[4;37mmemory_transcript_c.txt\e[0m\`.
+(3) Detailed memory leak tests' results are saved into \`\033[4;37mmemory_transcript_<interface>.txt\e[0m\`.
 (4) Detailed Efficiency tests' results are saved into \`\033[4;37mefficiency_transcript_<interface>.txt\e[0m\`.
 (5) Only failed tests' results are saved into their transcript.
 (6) Efficiency tests become invalid when running on tau-related server (e.g., nova).
+(7) Python memory test is very slow (10 minutes) and doesn't run on Nova.
 
 \e[4;37m\e[1;37mInstructions\e[0m:
 (1) Avoid any build/dist/egg directories/files from the working directory. Could potentially lead to undefined behaviors of the test script.
 (2) You shall run this shell script from within the directory that contains all of the files that you need to assign.
 (3) You shall have the package \`\e[4;37mvalgrind\e[0m\` installed if you wish to run memory leak tests.
-(4) You shall have the python packages \`\e[4;37mnumpy\e[0m\` and \`\e[4;37mscikit-learn\e[0m\` installed if you wish to run efficiency tests."
+(4) You shall have the package \`\e[4;37mpython3.8-dbg\e[0m\` installed if you wish to run python's memory leak tests.
+You can try to replace \`\e[4;37mpython3.8-dbg\e[0m\` with \`\e[4;37mpython3.x-dbg\e[0m\` or \`\e[4;37mpython3.xd\e[0m\` but make sure to change line 138 accordingly.
+(5) You shall have the python packages \`\e[4;37mnumpy\e[0m\` and \`\e[4;37mscikit-learn\e[0m\` installed if you wish to run efficiency tests."
 	exit
 }
 
